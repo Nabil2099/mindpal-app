@@ -83,7 +83,12 @@ class LLMService:
         }
 
         headers = self._headers()
-        timeout = httpx.Timeout(self.settings.llm_timeout_seconds, read=self.settings.llm_timeout_seconds)
+        timeout = httpx.Timeout(
+            connect=self.settings.llm_stream_connect_timeout_seconds,
+            read=self.settings.llm_stream_read_timeout_seconds,
+            write=self.settings.llm_stream_write_timeout_seconds,
+            pool=self.settings.llm_stream_connect_timeout_seconds,
+        )
 
         last_err: Exception | None = None
         for attempt in range(1, self.settings.llm_max_retries + 1):

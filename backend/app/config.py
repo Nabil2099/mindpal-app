@@ -18,8 +18,11 @@ class Settings(BaseSettings):
     groq_model: str = "llama-3.3-70b-versatile"
     groq_embedding_model: str = "text-embedding-3-large"
     llm_temperature: float = 0.4
-    llm_max_tokens: int = 700
+    llm_max_tokens: int = 160
     llm_timeout_seconds: int = 60
+    llm_stream_connect_timeout_seconds: int = 15
+    llm_stream_read_timeout_seconds: int = 180
+    llm_stream_write_timeout_seconds: int = 30
     llm_max_retries: int = 3
 
     chroma_persist_dir: str = "./chroma_data"
@@ -30,6 +33,11 @@ class Settings(BaseSettings):
 
     retrieval_top_k_messages: int = 5
     retrieval_top_k_kb: int = 3
+
+    memory_max_items: int = 10
+    memory_summary_max_tokens: int = 120
+    memory_summary_temperature: float = 0.1
+    memory_summary_min_chars: int = 80
 
     cors_origins: str = Field(default="http://localhost:5173", alias="CORS_ORIGINS")
 

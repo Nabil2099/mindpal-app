@@ -32,7 +32,14 @@ export default function ReflectionList({ reflections, activeId, onSelect, onDele
             >
               <button type="button" onClick={() => onSelect(reflection.id)} className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-semibold">{reflection.title}</p>
-                <p className="text-xs text-ink-700/70">{new Date(reflection.created_at).toLocaleDateString()}</p>
+                <div className="flex items-center gap-2 text-xs text-ink-700/70">
+                  <span>{new Date(reflection.created_at).toLocaleDateString()}</span>
+                  {reflection.is_closed ? (
+                    <span className="rounded-full bg-clay-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-800">
+                      Closed
+                    </span>
+                  ) : null}
+                </div>
               </button>
               <button
                 type="button"

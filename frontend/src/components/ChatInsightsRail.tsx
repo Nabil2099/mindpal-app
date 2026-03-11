@@ -38,21 +38,6 @@ function normalizeEmotionLabel(label: string): string {
   return label.trim().toLowerCase()
 }
 
-function derivePrompts(topEmotion: string, activeHour: number | null): string[] {
-  const emotionPrompt = topEmotion
-    ? `What is one gentle action that helps when ${topEmotion} shows up?`
-    : 'What is one thing you are grateful for this morning?'
-
-  const timePrompt =
-    activeHour !== null
-      ? `You are most active around ${String(activeHour).padStart(2, '0')}:00. What intention do you want to set for that window?`
-      : 'Identify one small win from yesterday.'
-
-  const groundingPrompt = 'If today had one non-negotiable, what would make the biggest difference?'
-
-  return [emotionPrompt, timePrompt, groundingPrompt]
-}
-
 export default function ChatInsightsRail({ className = '', onClose }: ChatInsightsRailProps) {
   const { insights, isLoadingInsights, fetchInsights, conversations, messagesByConversation } = useAppState()
 
@@ -117,10 +102,6 @@ export default function ChatInsightsRail({ className = '', onClose }: ChatInsigh
     return current
   }, [conversations, messagesByConversation])
 
-  const topEmotion = insights.emotions[0]?.label ?? ''
-  const activeHour = insights.timePatterns[0]?.hour_of_day ?? null
-  const prompts = useMemo(() => derivePrompts(topEmotion, activeHour), [topEmotion, activeHour])
-
   return (
     <aside
       className={`h-full shrink-0 border-l border-clay-200/70 bg-[#f5f1ea] px-4 py-5 shadow-[-10px_0_38px_-35px_rgba(62,49,38,0.5)] ${className}`}
@@ -152,17 +133,6 @@ export default function ChatInsightsRail({ className = '', onClose }: ChatInsigh
             </p>
             {isLoadingInsights ? <p className="mt-2 text-xs text-ink-700/70">Refreshing mood map...</p> : null}
           </article>
-        </section>
-
-        <section className="min-h-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-700/70">Reflective Prompts</p>
-          <div className="mt-3 space-y-2.5">
-            {prompts.map((prompt) => (
-              <article key={prompt} className="rounded-soft border border-clay-200/70 bg-white px-3.5 py-3 text-sm italic text-ink-700">
-                {`"${prompt}"`}
-              </article>
-            ))}
-          </div>
         </section>
 
         <article className="rounded-[1.15rem] bg-[#1d1814] px-4 py-5 text-center text-sand-50 shadow-soft">

@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  closeConversation as closeConversationApi,
   createConversation as createConversationApi,
   deleteConversation as deleteConversationApi,
   getConversationMessages,
@@ -47,6 +48,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [isSending, setIsSending] = useState(false)
   const [isLoadingInsights, setIsLoadingInsights] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const loadConversationMessages = useCallback(async (conversationId: number) => {
@@ -112,6 +114,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   }, [selectConversation])
 
+  const closeConversation = useCallback(async (id: number) => {
+    setError(null)
+    setIsClosing(true)
+    try {
+      const updated = await closeConversationApi(id, USER_ID)
+      setConversations((prev) => sortConversations(prev.map((conversation) => (conversation.id === id ? updated : conversation))))
+    } catch {
+      setError('Could not close this reflection.')
+    } finally {
+      setIsClosing(false)
+    }
+  }, [])
+
   const removeConversation = useCallback(
     async (id: number) => {
       setError(null)
@@ -159,6 +174,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       }
 
       let conversationId = currentConversationId
+      const activeConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null
+
+      if (activeConversation?.is_closed) {
+        setError('This reflection is closed. Start a new one to keep chatting.')
+        return
+      }
 
       if (!conversationId) {
         try {
@@ -230,6 +251,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                   message.id === tempAssistantId
                     ? {
                         ...message,
+                        content: payload.response || message.content,
                         id: payload.assistant_message_id,
                         timestamp: payload.timestamp,
                       }
@@ -238,6 +260,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
               }))
             },
             onError: (payload) => {
+              const hasPersistedPartial =
+                typeof payload.assistant_message_id === 'number' &&
+                typeof payload.timestamp === 'string' &&
+                payload.partial_saved !== false
+
               if (typeof payload.assistant_message_id === 'number' && typeof payload.timestamp === 'string') {
                 const persistedId = payload.assistant_message_id
                 const persistedTimestamp = payload.timestamp
@@ -247,6 +274,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                     message.id === tempAssistantId
                       ? {
                           ...message,
+                          content: payload.response || message.content,
                           id: persistedId,
                           timestamp: persistedTimestamp,
                         }
@@ -254,10 +282,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                   ),
                 }))
               }
-              setError(payload.message ?? 'The response stream was interrupted. Partial output was saved.')
+
+              if (hasPersistedPartial) {
+                setError(null)
+              } else {
+                setError(payload.message ?? 'The response stream was interrupted. Please try again.')
+              }
             },
           },
         )
+
+        const refreshedConversations = await getConversations(USER_ID)
+        setConversations(sortConversations(refreshedConversations))
       } catch {
         setError('Your reflection could not be sent. Please try again.')
         if (tempAssistantId !== null) {
@@ -271,7 +307,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setIsSending(false)
       }
     },
-    [currentConversationId],
+    [conversations, currentConversationId],
   )
 
   const fetchInsights = useCallback(async () => {
@@ -307,10 +343,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       isSending,
       isLoadingInsights,
       isDeleting,
+      isClosing,
       error,
       initialize,
       selectConversation,
       createConversation,
+      closeConversation,
       removeConversation,
       sendMessage,
       fetchInsights,
@@ -325,10 +363,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       isSending,
       isLoadingInsights,
       isDeleting,
+      isClosing,
       error,
       initialize,
       selectConversation,
       createConversation,
+      closeConversation,
       removeConversation,
       sendMessage,
       fetchInsights,

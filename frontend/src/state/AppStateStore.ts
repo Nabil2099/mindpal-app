@@ -12,10 +12,12 @@ export interface AppState {
   isSending: boolean
   isLoadingInsights: boolean
   isDeleting: boolean
+  isClosing: boolean
   error: string | null
   initialize: () => Promise<void>
   selectConversation: (id: number | null) => Promise<void>
   createConversation: () => Promise<void>
+  closeConversation: (id: number) => Promise<void>
   removeConversation: (id: number) => Promise<void>
   sendMessage: (content: string) => Promise<void>
   fetchInsights: () => Promise<void>

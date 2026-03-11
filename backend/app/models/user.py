@@ -13,3 +13,4 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
+    chat_memories = relationship("UserChatMemory", back_populates="user", cascade="all, delete-orphan")

@@ -9,6 +9,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -19,9 +21,11 @@ from app.database.base import Base
 from app.models.conversation import Conversation
 from app.models.message import Message, MessageRole
 from app.models.message_analysis import MessageAnalysis
+from app.models.user_chat_memory import UserChatMemory
 from app.models.user import User
 
 
+@pytest.mark.asyncio
 async def test_deletion_cascade():
     """
     Test that deleting a conversation cascades to delete all related messages and analysis.
@@ -73,6 +77,7 @@ async def test_deletion_cascade():
         )
         session.add(analysis1)
         session.add(analysis2)
+        session.add(UserChatMemory(user_id=1, chat_id=conversation_id, summary="User is stressed by work and wants calmer mornings."))
         await session.commit()
         
         # Verify data was created
@@ -82,15 +87,18 @@ async def test_deletion_cascade():
         convo_count_before = (await session.execute(select(func.count(Conversation.id)))).scalar()
         msg_count_before = (await session.execute(select(func.count(Message.id)))).scalar()
         analysis_count_before = (await session.execute(select(func.count(MessageAnalysis.id)))).scalar()
+        memory_count_before = (await session.execute(select(func.count(UserChatMemory.id)))).scalar()
         
         print(f"Before deletion:")
         print(f"  Conversations: {convo_count_before}")
         print(f"  Messages: {msg_count_before}")
         print(f"  Analysis records: {analysis_count_before}")
+        print(f"  Chat memories: {memory_count_before}")
         
         assert convo_count_before == 1, f"Expected 1 conversation, got {convo_count_before}"
         assert msg_count_before == 2, f"Expected 2 messages, got {msg_count_before}"
         assert analysis_count_before == 2, f"Expected 2 analysis records, got {analysis_count_before}"
+        assert memory_count_before == 1, f"Expected 1 chat memory record, got {memory_count_before}"
         
         # Now test deletion - use the same pattern as the API
         conversation_to_delete = (await session.execute(select(Conversation).where(Conversation.id == conversation_id))).scalar_one_or_none()
@@ -104,15 +112,18 @@ async def test_deletion_cascade():
         convo_count_after = (await session.execute(select(func.count(Conversation.id)))).scalar()
         msg_count_after = (await session.execute(select(func.count(Message.id)))).scalar()
         analysis_count_after = (await session.execute(select(func.count(MessageAnalysis.id)))).scalar()
+        memory_count_after = (await session.execute(select(func.count(UserChatMemory.id)))).scalar()
         
         print(f"\nAfter deletion:")
         print(f"  Conversations: {convo_count_after}")
         print(f"  Messages: {msg_count_after}")
         print(f"  Analysis records: {analysis_count_after}")
+        print(f"  Chat memories: {memory_count_after}")
         
         assert convo_count_after == 0, f"Expected 0 conversations after deletion, got {convo_count_after}"
         assert msg_count_after == 0, f"Expected 0 messages after deletion, got {msg_count_after}"
         assert analysis_count_after == 0, f"Expected 0 analysis records after deletion, got {analysis_count_after}"
+        assert memory_count_after == 0, f"Expected 0 chat memory records after deletion, got {memory_count_after}"
         
         print("\n✓ Deletion cascade test PASSED - all related records were deleted!")
     

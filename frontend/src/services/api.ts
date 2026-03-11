@@ -37,6 +37,13 @@ export async function deleteConversation(id: number): Promise<void> {
   await api.delete(`/conversations/${id}`)
 }
 
+export async function closeConversation(id: number, userId: number): Promise<Conversation> {
+  const { data } = await api.post<Conversation>(`/conversations/${id}/close`, null, {
+    params: { user_id: userId },
+  })
+  return data
+}
+
 export async function getConversationMessages(conversationId: number, userId: number): Promise<ConversationMessagesResponse> {
   const { data } = await api.get<ConversationMessagesResponse>(`/conversations/${conversationId}/messages`, {
     params: { user_id: userId },
@@ -52,13 +59,18 @@ export async function sendChat(payload: ChatRequest): Promise<ChatResponse> {
 export interface StreamEndPayload {
   conversation_id: number
   assistant_message_id: number
+  response: string
   timestamp: string
 }
 
 export interface StreamErrorPayload {
   message?: string
+  error_code?: string
+  retryable?: boolean
+  partial_saved?: boolean
   conversation_id?: number
   assistant_message_id?: number
+  response?: string
   timestamp?: string
 }
 
@@ -145,23 +157,45 @@ export async function streamChat(payload: ChatRequest, handlers: StreamChatHandl
     }
   }
 
-  while (true) {
-    const { value, done } = await reader.read()
-    if (done) {
-      break
+  try {
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) {
+        break
+      }
+
+      buffer += decoder.decode(value, { stream: true })
+      const blocks = buffer.split(/\r?\n\r?\n/)
+      buffer = blocks.pop() ?? ''
+
+      for (const block of blocks) {
+        processEventBlock(block)
+        if (terminalEventSeen) {
+          return
+        }
+      }
     }
 
-    buffer += decoder.decode(value, { stream: true })
-    const blocks = buffer.split(/\r?\n\r?\n/)
-    buffer = blocks.pop() ?? ''
+    // Flush any trailing decoded bytes and parse terminal blocks that arrived at EOF.
+    buffer += decoder.decode()
+    const trailingBlocks = buffer.split(/\r?\n\r?\n/)
+    buffer = trailingBlocks.pop() ?? ''
 
-    for (const block of blocks) {
+    for (const block of trailingBlocks) {
       processEventBlock(block)
       if (terminalEventSeen) {
-        await reader.cancel()
         return
       }
     }
+
+    if (buffer.trim()) {
+      processEventBlock(buffer)
+    }
+  } catch {
+    handlers.onError?.({ message: 'The stream was interrupted by a network error.' })
+    return
+  } finally {
+    reader.releaseLock()
   }
 
   if (!terminalEventSeen) {

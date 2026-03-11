@@ -1,6 +1,7 @@
 from app.models.conversation import Conversation
 from app.models.message import Message
 from app.models.message_analysis import MessageAnalysis
+from app.models.user_chat_memory import UserChatMemory
 from app.models.user import User
 
-__all__ = ["User", "Conversation", "Message", "MessageAnalysis"]
+__all__ = ["User", "Conversation", "Message", "MessageAnalysis", "UserChatMemory"]

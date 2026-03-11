@@ -5,6 +5,8 @@ export interface Conversation {
   user_id: number
   title: string
   created_at: string
+  is_closed: boolean
+  closed_at: string | null
 }
 
 export interface ConversationListResponse {

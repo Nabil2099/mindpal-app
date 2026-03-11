@@ -28,6 +28,7 @@ class VectorService:
         *,
         vector_id: str,
         content: str,
+        user_id: int,
         conversation_id: int,
         message_id: int,
         timestamp: datetime,
@@ -37,6 +38,7 @@ class VectorService:
     ) -> None:
         embeddings = await self.llm.embed_texts([content])
         metadata = {
+            "user_id": str(user_id),
             "conversation_id": str(conversation_id),
             "message_id": str(message_id),
             "timestamp": timestamp.isoformat(),
@@ -64,12 +66,33 @@ class VectorService:
             metadatas=[{"topic": topic, "source": "knowledge_base"}],
         )
 
-    async def search_similar_messages(self, query: str, top_k: int) -> list[str]:
+    async def search_similar_messages(
+        self,
+        query: str,
+        top_k: int,
+        *,
+        user_id: int,
+        conversation_id: int | None = None,
+    ) -> list[str]:
+        """Retrieve semantically similar chat messages scoped to one user.
+
+        Optional conversation scoping can be applied for strictly local recall.
+        """
         embeddings = await self.llm.embed_texts([query])
+        where_filter: dict[str, Any] = {"user_id": str(user_id)}
+        if conversation_id is not None:
+            where_filter = {
+                "$and": [
+                    {"user_id": str(user_id)},
+                    {"conversation_id": str(conversation_id)},
+                ]
+            }
+
         result = await asyncio.to_thread(
             self.messages_collection.query,
             query_embeddings=embeddings,
             n_results=top_k,
+            where=where_filter,
         )
         return result.get("documents", [[]])[0]
 

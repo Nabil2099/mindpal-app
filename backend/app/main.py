@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router as api_router
 from app.config import get_settings
 from app.database.base import Base
+from app.database.schema import ensure_schema_updates
 from app.database.session import engine
 from app import models  # noqa: F401
 from app.rag.knowledge_base_seed import seed_knowledge_base
@@ -20,6 +21,7 @@ async def lifespan(_: FastAPI):
     """Initialize persistent resources on startup."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await ensure_schema_updates(conn)
 
     graph_service = GraphService()
     graph_service.load_state()

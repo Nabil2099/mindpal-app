@@ -13,6 +13,8 @@ class ConversationResponse(BaseModel):
     user_id: int
     title: str
     created_at: datetime
+    is_closed: bool
+    closed_at: datetime | None
 
 
 class ConversationListResponse(BaseModel):

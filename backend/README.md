@@ -11,6 +11,7 @@ Backend for a personalized mental health RAG chatbot built with FastAPI, SQLite,
 - LLM-based emotion and habit detection via Groq
 - Temporal analytics for hour/day trends
 - User-scoped overview metrics, daily emotion/habit trends, and habit-emotion associations
+- Closeable conversations with short long-term memory summaries
 
 ## Project Structure
 
@@ -56,6 +57,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `GET /conversations`
 - `POST /conversations`
 - `DELETE /conversations/{id}`
+- `POST /conversations/{id}/close`
 - `GET /insights/emotions`
 - `GET /insights/habits`
 - `GET /insights/time`
@@ -76,3 +78,6 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - Knowledge base documents are seeded on startup into Chroma.
 - Graph state is persisted to `mindpal_graph.json`.
 - This iteration is single-tenant MVP scope (no auth).
+- Closing a conversation stores one short summary in `user_chat_memory`; MindPal injects the latest 10 summaries into future prompts.
+- Existing SQLite databases will pick up the new `conversations.is_closed` and `conversations.closed_at` columns at startup.
+- Historical closed conversations can be backfilled with `"d:/mindpal v5/.venv/Scripts/python.exe" scripts/backfill_chat_memories.py` from the `backend/` directory.

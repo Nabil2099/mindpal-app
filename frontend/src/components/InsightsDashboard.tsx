@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppState } from '../state/useAppState'
+import type { DailyEmotionTrend } from '../types/api'
 
 interface InsightsDashboardProps {
   onOpenNavigation?: () => void
@@ -50,6 +51,12 @@ function weekdayLabel(date: string): string {
     return date.slice(0, 3).toUpperCase()
   }
   return parsed.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()
+}
+
+function formatFullDate(date: string): string {
+  const parsed = new Date(date)
+  if (Number.isNaN(parsed.getTime())) return date
+  return parsed.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
 export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboardProps) {
@@ -112,17 +119,45 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
 
   const timelineData = useMemo(() => {
     const recent = insights.emotionTrends.slice(-7)
-    const normalized = recent.map((day) => ({
-      day: weekdayLabel(day.date),
-      total: day.total || day.emotions.reduce((sum, item) => sum + item.count, 0),
-    }))
-    const maxTotal = Math.max(...normalized.map((item) => item.total), 1)
-
-    return normalized.map((item) => ({
+    const enriched = recent.map((day) => {
+      const total = day.total || day.emotions.reduce((sum, item) => sum + item.count, 0)
+      const weighted = day.emotions.reduce((sum, item) => {
+        const w = emotionWeights[normalizeEmotionLabel(item.label)] ?? 0
+        return sum + w * item.count
+      }, 0)
+      const score = total > 0 ? weighted / total : 0
+      return {
+        day: weekdayLabel(day.date),
+        total,
+        source: day,
+        moodLabel: toMoodLevel(score),
+      }
+    })
+    const maxTotal = Math.max(...enriched.map((item) => item.total), 1)
+    return enriched.map((item) => ({
       ...item,
       height: Math.max(34, Math.round((item.total / maxTotal) * 100)),
     }))
   }, [insights.emotionTrends])
+
+  const [hoveredDayIndex, setHoveredDayIndex] = useState<number | null>(null)
+  const [selectedDay, setSelectedDay] = useState<DailyEmotionTrend | null>(null)
+
+  const selectedDayDetails = useMemo(() => {
+    if (!selectedDay) return null
+    const total = selectedDay.total || selectedDay.emotions.reduce((s, e) => s + e.count, 0)
+    const weighted = selectedDay.emotions.reduce((s, e) => {
+      const w = emotionWeights[normalizeEmotionLabel(e.label)] ?? 0
+      return s + w * e.count
+    }, 0)
+    const score = total > 0 ? weighted / total : 0
+    return {
+      total,
+      moodLabel: toMoodLevel(score),
+      topEmotions: selectedDay.emotions.slice(0, 5),
+      formattedDate: formatFullDate(selectedDay.date),
+    }
+  }, [selectedDay])
 
   const emotionFrequencyData = useMemo(() => {
     const top = insights.emotions.slice(0, 4).map((item) => ({
@@ -149,21 +184,6 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
     [insights.habits, insights.overview],
   )
 
-  const prompts = useMemo(() => {
-    const topEmotion = insights.emotions[0]?.label
-    const activeHour = insights.timePatterns[0]?.hour_of_day
-    const emotionPrompt = topEmotion
-      ? `What is one gentle action that helps when ${prettify(topEmotion).toLowerCase()} shows up?`
-      : 'What is one thing you are grateful for this morning?'
-
-    const timePrompt =
-      activeHour !== undefined
-        ? `You are most active around ${String(activeHour).padStart(2, '0')}:00. What intention do you want to set for that window?`
-        : 'Identify one small win from yesterday.'
-
-    return [emotionPrompt, timePrompt]
-  }, [insights.emotions, insights.timePatterns])
-
   const associationData = useMemo(
     () =>
       insights.habitEmotionLinks.slice(0, 6).map((row) => ({
@@ -173,6 +193,15 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
       })),
     [insights.habitEmotionLinks],
   )
+
+  useEffect(() => {
+    if (!selectedDay) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedDay(null)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [selectedDay])
 
   useEffect(() => {
     void fetchInsights()
@@ -224,15 +253,35 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
               {timelineData.length ? (
                 <div className="mt-5 grid grid-cols-7 items-end gap-2 sm:gap-3">
                   {timelineData.map((item, index) => (
-                    <div key={`${item.day}-${index}`} className="flex flex-col items-center gap-2">
-                      <div className="flex h-40 w-full items-end justify-center rounded-[1rem] bg-sand-50/95 p-1 sm:h-44">
+                    <div key={`${item.day}-${index}`} className="relative flex flex-col items-center gap-2">
+                      {hoveredDayIndex === index && (
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-[136px] -translate-x-1/2 rounded-[1rem] border border-clay-200/80 bg-white/97 p-2.5 text-center shadow-soft">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-clay-300">{item.moodLabel}</p>
+                          <p className="mt-0.5 text-xs font-semibold text-ink-900">
+                            {item.source.emotions[0] ? prettify(item.source.emotions[0].label) : '\u2014'}
+                          </p>
+                          <p className="mt-0.5 text-[10px] text-ink-700/70">
+                            {item.total} {item.total === 1 ? 'entry' : 'entries'}
+                          </p>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        aria-label={`View mood details for ${item.day}`}
+                        className="flex h-40 w-full cursor-pointer items-end justify-center rounded-[1rem] bg-sand-50/95 p-1 transition-all hover:bg-sand-100/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-300 sm:h-44"
+                        onMouseEnter={() => setHoveredDayIndex(index)}
+                        onMouseLeave={() => setHoveredDayIndex(null)}
+                        onFocus={() => setHoveredDayIndex(index)}
+                        onBlur={() => setHoveredDayIndex(null)}
+                        onClick={() => setSelectedDay(item.source)}
+                      >
                         <div
                           className={`w-full rounded-[0.9rem] transition-all ${
                             index === timelineData.length - 1 ? 'bg-clay-300/95' : 'bg-clay-100/95'
                           }`}
                           style={{ height: `${item.height}%` }}
                         />
-                      </div>
+                      </button>
                       <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-700/70 sm:text-xs">
                         {item.day}
                       </span>
@@ -347,17 +396,6 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
               </article>
             </section>
 
-            <section>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-700/65">Reflective Prompts</p>
-              <div className="mt-3 space-y-2.5">
-                {prompts.map((prompt) => (
-                  <article key={prompt} className="rounded-[1rem] border border-clay-200/70 bg-white/95 px-3.5 py-3 text-sm italic text-ink-700">
-                    {`"${prompt}"`}
-                  </article>
-                ))}
-              </div>
-            </section>
-
             <article className="rounded-[1.2rem] bg-[#1f1813] px-4 py-5 text-center text-sand-50 shadow-soft">
               <p className="text-3xl leading-none">{streak}</p>
               <p className="mt-1 text-2xl font-semibold">Day Streak</p>
@@ -393,6 +431,68 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
           </article>
         ) : null}
       </div>
+
+      {selectedDay && selectedDayDetails && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Mood details for ${selectedDayDetails.formattedDate}`}
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-ink-900/25"
+            aria-label="Close"
+            onClick={() => setSelectedDay(null)}
+          />
+          <div className="relative z-10 mx-0 w-full max-w-sm rounded-t-[1.7rem] border border-clay-200/80 bg-white/98 p-6 shadow-soft sm:mx-4 sm:rounded-[1.7rem]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-700/60">
+                  {selectedDayDetails.formattedDate}
+                </p>
+                <h3 className="mt-1 text-2xl font-semibold text-ink-900">{selectedDayDetails.moodLabel}</h3>
+              </div>
+              <button
+                type="button"
+                className="subtle-icon-button mt-0.5 shrink-0"
+                aria-label="Close details"
+                onClick={() => setSelectedDay(null)}
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M18 6L6 18" strokeLinecap="round" />
+                  <path d="M6 6l12 12" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <p className="mt-2 text-sm text-ink-700/70">
+              {selectedDayDetails.total} emotion {selectedDayDetails.total === 1 ? 'entry' : 'entries'} recorded.
+            </p>
+            {selectedDayDetails.topEmotions.length ? (
+              <div className="mt-4 space-y-2.5">
+                {selectedDayDetails.topEmotions.map((e) => (
+                  <div key={e.label} className="rounded-soft border border-clay-100 bg-sand-50/70 px-3.5 py-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-ink-900">{prettify(e.label)}</p>
+                      <span className="text-xs font-semibold text-ink-700">{e.count}</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 w-full rounded-full bg-clay-100">
+                      <div
+                        className="h-1.5 rounded-full bg-clay-300"
+                        style={{
+                          width: `${Math.max(Math.round((e.count / (selectedDayDetails.topEmotions[0]?.count ?? 1)) * 100), 5)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-ink-700/70">No emotion data for this day.</p>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   )
 }

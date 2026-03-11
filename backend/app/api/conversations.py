@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -8,6 +9,7 @@ from app.database.session import get_db_session
 from app.models.conversation import Conversation
 from app.models.message import Message
 from app.models.user import User
+from app.services.chat_memory_service import ChatMemoryService
 from app.schemas.conversation import (
     ConversationListResponse,
     ConversationMessagesResponse,
@@ -18,6 +20,7 @@ from app.schemas.conversation import (
 
 router = APIRouter(tags=["conversations"])
 logger = logging.getLogger(__name__)
+memory_service = ChatMemoryService()
 
 
 @router.get("/conversations", response_model=ConversationListResponse)
@@ -25,7 +28,7 @@ async def list_conversations(user_id: int | None = None, db: AsyncSession = Depe
     query = select(Conversation)
     if user_id is not None:
         query = query.where(Conversation.user_id == user_id)
-    rows = (await db.execute(query)).scalars().all()
+    rows = (await db.execute(query.order_by(Conversation.created_at.desc(), Conversation.id.desc()))).scalars().all()
     return ConversationListResponse(conversations=[ConversationResponse.model_validate(row, from_attributes=True) for row in rows])
 
 
@@ -45,6 +48,32 @@ async def create_conversation(
     await db.commit()
     await db.refresh(convo)
     return ConversationResponse.model_validate(convo, from_attributes=True)
+
+
+@router.post("/conversations/{id}/close", response_model=ConversationResponse)
+async def close_conversation(
+    id: int,
+    user_id: int,
+    db: AsyncSession = Depends(get_db_session),
+) -> ConversationResponse:
+    conversation = (
+        await db.execute(select(Conversation).where(Conversation.id == id, Conversation.user_id == user_id))
+    ).scalar_one_or_none()
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found for this user")
+
+    if not conversation.is_closed:
+        conversation.is_closed = True
+        conversation.closed_at = datetime.utcnow()
+        try:
+            await memory_service.summarize_and_store_conversation(db, user_id=user_id, conversation_id=id)
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to generate chat memory for conversation_id=%s user_id=%s", id, user_id)
+
+        await db.commit()
+        await db.refresh(conversation)
+
+    return ConversationResponse.model_validate(conversation, from_attributes=True)
 
 
 @router.get("/conversations/{id}/messages", response_model=ConversationMessagesResponse)

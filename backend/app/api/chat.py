@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +27,8 @@ async def chat(payload: ChatRequest, db: AsyncSession = Depends(get_db_session))
 
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found for this user")
+    if conversation.is_closed:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Conversation is closed")
 
     pipeline = RAGPipeline()
     result = await pipeline.run(
@@ -48,6 +50,8 @@ async def chat_stream(payload: ChatRequest, db: AsyncSession = Depends(get_db_se
 
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found for this user")
+    if conversation.is_closed:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Conversation is closed")
 
     pipeline = RAGPipeline()
 
@@ -63,7 +67,15 @@ async def chat_stream(payload: ChatRequest, db: AsyncSession = Depends(get_db_se
                 yield _sse_event(event_type, event)
         except Exception as exc:  # noqa: BLE001
             # Stream-level error events let the frontend keep partial text and show recoverable state.
-            yield _sse_event("error", {"message": f"Streaming failed: {exc}"})
+            yield _sse_event(
+                "error",
+                {
+                    "message": "Streaming failed before completion.",
+                    "error_code": "stream_internal_error",
+                    "retryable": True,
+                    "partial_saved": False,
+                },
+            )
 
     return StreamingResponse(
         event_generator(),
