@@ -3,13 +3,14 @@ import type { FormEvent, KeyboardEvent } from 'react'
 interface ChatInputProps {
   value: string
   isSending: boolean
+  variant?: 'empty' | 'docked'
   disabled?: boolean
   onOpenToday?: () => void
   onChange: (value: string) => void
   onSend: () => void
 }
 
-export default function ChatInput({ value, isSending, disabled = false, onOpenToday, onChange, onSend }: ChatInputProps) {
+export default function ChatInput({ value, isSending, variant = 'docked', disabled = false, onOpenToday, onChange, onSend }: ChatInputProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!value.trim()) {
@@ -27,10 +28,25 @@ export default function ChatInput({ value, isSending, disabled = false, onOpenTo
     }
   }
 
+  const isEmptyVariant = variant === 'empty'
+
   return (
-    <form onSubmit={handleSubmit} className="border-t border-clay-200/70 bg-sand-50/80 px-4 py-4 backdrop-blur sm:px-6">
-      <div className="mx-auto w-full max-w-[720px]">
-        <div className="flex items-end gap-3 rounded-[1.75rem] border border-clay-200 bg-white px-4 py-3 shadow-soft">
+    <form
+      onSubmit={handleSubmit}
+      className={
+        isEmptyVariant
+          ? 'w-full animate-rise-delayed'
+          : 'border-t border-clay-200/70 bg-sand-50/80 px-4 py-4 backdrop-blur sm:px-6'
+      }
+    >
+      <div className={isEmptyVariant ? 'w-full' : 'mx-auto w-full max-w-[720px]'}>
+        <div
+          className={
+            isEmptyVariant
+              ? 'flex items-end gap-3 rounded-[1.9rem] border border-clay-200/90 bg-white/95 px-4 py-3 shadow-soft transition-all duration-300'
+              : 'flex items-end gap-3 rounded-[1.75rem] border border-clay-200 bg-white px-4 py-3 shadow-soft'
+          }
+        >
           {onOpenToday ? (
             <button
               type="button"
@@ -54,20 +70,25 @@ export default function ChatInput({ value, isSending, disabled = false, onOpenTo
             disabled={disabled || isSending}
             rows={1}
             placeholder="Type your reflection here..."
-            className="max-h-44 min-h-[52px] flex-1 resize-none rounded-soft border-none bg-transparent px-1 py-3 font-body text-[15px] leading-relaxed text-ink-800 placeholder:text-ink-700/60 focus:outline-none"
+            className={
+              isEmptyVariant
+                ? 'max-h-44 min-h-[56px] flex-1 resize-none rounded-soft border-none bg-transparent px-1 py-3 font-body text-base leading-relaxed text-ink-800 placeholder:text-ink-700/60 focus:outline-none'
+                : 'max-h-44 min-h-[52px] flex-1 resize-none rounded-soft border-none bg-transparent px-1 py-3 font-body text-[15px] leading-relaxed text-ink-800 placeholder:text-ink-700/60 focus:outline-none'
+            }
           />
           <button
             type="submit"
             disabled={disabled || isSending || !value.trim()}
-            className="rounded-full bg-clay-200 px-4 py-3 text-sm font-semibold text-ink-900 transition hover:bg-clay-300 disabled:cursor-not-allowed disabled:opacity-60"
+            className={
+              isEmptyVariant
+                ? 'rounded-full bg-ink-900 px-4 py-3 text-sm font-semibold text-sand-50 transition hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-60'
+                : 'rounded-full bg-clay-200 px-4 py-3 text-sm font-semibold text-ink-900 transition hover:bg-clay-300 disabled:cursor-not-allowed disabled:opacity-60'
+            }
           >
             {isSending ? '...' : '>'}
           </button>
         </div>
-        <div className="mt-2 flex justify-center gap-6 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-700/65">
-          <span>Change Tone</span>
-          <span>Save Draft</span>
-        </div>
+
       </div>
     </form>
   )

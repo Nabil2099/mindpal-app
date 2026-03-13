@@ -29,6 +29,13 @@ export default function ChatWindow({ onOpenInsights }: ChatWindowProps) {
     return messagesByConversation[currentConversationId] ?? []
   }, [currentConversationId, messagesByConversation])
 
+  const hasLoadedCurrentMessages = currentConversationId
+    ? Object.prototype.hasOwnProperty.call(messagesByConversation, currentConversationId)
+    : true
+
+  const hasMessages = messages.length > 0
+  const showConversationLayout = isInitializing || hasMessages || (Boolean(currentConversationId) && !hasLoadedCurrentMessages)
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isSending])
@@ -42,29 +49,30 @@ export default function ChatWindow({ onOpenInsights }: ChatWindowProps) {
     void sendMessage(trimmed)
   }
 
-  if (!currentConversationId) {
+  if (!showConversationLayout) {
     return (
       <section className="flex h-full min-h-0 flex-col">
-        <div className="flex flex-1 items-center justify-center px-6 py-8">
-          <div className="w-full max-w-[720px]">
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-clay-200 bg-sand-100 text-sm text-ink-700">
-              *
+        <div className="flex flex-1 items-center justify-center px-6 py-10 sm:px-8">
+          <div className="w-full max-w-[760px] animate-rise text-center">
+            <h1 className="mx-auto max-w-3xl font-heading text-[34px] font-semibold leading-tight text-ink-900 sm:text-[42px]">
+              {welcomeText}
+            </h1>
+            <div className="mx-auto mt-8 w-full max-w-[720px]">
+              <ChatInput
+                value={draft}
+                onChange={setDraft}
+                onSend={handleSend}
+                onOpenToday={onOpenInsights}
+                isSending={isSending}
+                disabled={false}
+                variant="empty"
+              />
             </div>
-            <h1 className="max-w-2xl text-[34px] font-semibold leading-tight text-ink-900">{welcomeText}</h1>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-700">
-              Sometimes just putting words to feelings can create space. Don't worry about perfect sentences, let it flow.
-            </p>
-            <SuggestionChips onSelect={setDraft} />
+            <div className="mx-auto max-w-[720px]">
+              <SuggestionChips onSelect={setDraft} />
+            </div>
           </div>
         </div>
-        <ChatInput
-          value={draft}
-          onChange={setDraft}
-          onSend={handleSend}
-          onOpenToday={onOpenInsights}
-          isSending={isSending}
-          disabled={false}
-        />
       </section>
     )
   }
@@ -101,6 +109,7 @@ export default function ChatWindow({ onOpenInsights }: ChatWindowProps) {
         onOpenToday={onOpenInsights}
         isSending={isSending}
         disabled={!currentConversationId}
+        variant="docked"
       />
     </section>
   )
