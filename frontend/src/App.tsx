@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import ChatInsightsRail from './components/ChatInsightsRail'
 import ChatWindow from './components/ChatWindow'
 import InsightsDashboard from './components/InsightsDashboard'
+import RecommendationsPage from './components/RecommendationsPage'
 import Sidebar from './components/Sidebar'
 import { useAppState } from './state/useAppState'
 
@@ -61,6 +62,7 @@ function Shell() {
                   }
                 />
                 <Route path="/insights" element={<InsightsDashboard onOpenNavigation={handleOpenNavigation} />} />
+                <Route path="/recommendations" element={<RecommendationsPage onOpenNavigation={handleOpenNavigation} />} />
                 <Route path="*" element={<Navigate to="/chat" replace />} />
               </Routes>
             </div>

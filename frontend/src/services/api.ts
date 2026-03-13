@@ -12,7 +12,15 @@ import type {
   HabitEmotionLinkInsight,
   HabitInsight,
   OverviewInsight,
+  DailyHabitChecklistItem,
+  DailyHabitChecklistResponse,
+  HabitCheckRequest,
+  RecommendationBatch,
+  RecommendationGenerationRequest,
+  RecommendationHistoryResponse,
+  RecommendationInteractionRequest,
   TimePatternInsight,
+  UserHabit,
 } from '../types/api'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
@@ -39,6 +47,13 @@ export async function deleteConversation(id: number): Promise<void> {
 
 export async function closeConversation(id: number, userId: number): Promise<Conversation> {
   const { data } = await api.post<Conversation>(`/conversations/${id}/close`, null, {
+    params: { user_id: userId },
+  })
+  return data
+}
+
+export async function reopenConversation(id: number, userId: number): Promise<Conversation> {
+  const { data } = await api.post<Conversation>(`/conversations/${id}/reopen`, null, {
     params: { user_id: userId },
   })
   return data
@@ -246,6 +261,65 @@ export async function getHabitEmotionLinkInsights(
 ): Promise<HabitEmotionLinkInsight[]> {
   const params = { user_id: userId, min_count: minCount, top_n: topN }
   const { data } = await api.get<HabitEmotionLinkInsight[]>('/insights/associations/habit-emotion', { params })
+  return data
+}
+
+export async function getTodayRecommendations(userId: number, category: string): Promise<RecommendationBatch> {
+  const params = { user_id: userId, category }
+  const { data } = await api.get<RecommendationBatch>('/recommendations/today', { params })
+  return data
+}
+
+export async function generateRecommendations(
+  payload: RecommendationGenerationRequest,
+): Promise<RecommendationBatch> {
+  const { data } = await api.post<RecommendationBatch>('/recommendations/generate', payload)
+  return data
+}
+
+export async function getRecommendationHistory(
+  userId: number,
+  limit = 10,
+): Promise<RecommendationHistoryResponse> {
+  const params = { user_id: userId, limit }
+  const { data } = await api.get<RecommendationHistoryResponse>('/recommendations/history', { params })
+  return data
+}
+
+export async function selectRecommendationItem(itemId: number, userId: number): Promise<RecommendationBatch['items'][number]> {
+  const { data } = await api.post<RecommendationBatch['items'][number]>(`/recommendations/items/${itemId}/select`, null, {
+    params: { user_id: userId },
+  })
+  return data
+}
+
+export async function completeRecommendationItem(itemId: number, userId: number): Promise<RecommendationBatch['items'][number]> {
+  const { data } = await api.post<RecommendationBatch['items'][number]>(`/recommendations/items/${itemId}/complete`, null, {
+    params: { user_id: userId },
+  })
+  return data
+}
+
+export async function logRecommendationItemInteraction(
+  itemId: number,
+  payload: RecommendationInteractionRequest,
+): Promise<void> {
+  await api.post(`/recommendations/items/${itemId}/interactions`, payload)
+}
+
+export async function adoptRecommendationItem(itemId: number, payload: { user_id: number }): Promise<UserHabit> {
+  const { data } = await api.post<UserHabit>(`/recommendations/items/${itemId}/habit`, payload)
+  return data
+}
+
+export async function getHabitChecklist(userId: number, forDate?: string): Promise<DailyHabitChecklistResponse> {
+  const params = forDate ? { user_id: userId, for_date: forDate } : { user_id: userId }
+  const { data } = await api.get<DailyHabitChecklistResponse>('/recommendations/habits/checklist', { params })
+  return data
+}
+
+export async function setHabitCheck(habitId: number, payload: HabitCheckRequest): Promise<DailyHabitChecklistItem> {
+  const { data } = await api.put<DailyHabitChecklistItem>(`/recommendations/habits/${habitId}/check`, payload)
   return data
 }
 

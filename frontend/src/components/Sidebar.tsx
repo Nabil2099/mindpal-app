@@ -63,6 +63,17 @@ export default function Sidebar({ className = '', onNavigate, onClose }: Sidebar
           >
             Insights
           </NavLink>
+          <NavLink
+            to="/recommendations"
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              `rounded-soft px-3 py-2 text-sm font-semibold transition ${
+                isActive ? 'bg-clay-200 text-ink-900' : 'text-ink-700 hover:bg-sand-50/90'
+              }`
+            }
+          >
+            Recommendations
+          </NavLink>
         </nav>
 
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-700/65">Recent Entries</p>

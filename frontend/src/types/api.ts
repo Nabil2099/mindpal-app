@@ -1,4 +1,8 @@
-export type AppTab = 'chat' | 'insights'
+export type AppTab = 'chat' | 'insights' | 'recommendations'
+
+export type RecommendationCategory = 'balance' | 'calm' | 'energy' | 'focus' | 'reflection'
+export type RecommendationKind = 'timed_action' | 'habit' | 'instant_action' | 'reflection'
+export type RecommendationStatus = 'pending' | 'selected' | 'completed'
 
 export interface Conversation {
   id: number
@@ -107,4 +111,75 @@ export interface InsightsBundle {
   emotionTrends: DailyEmotionTrend[]
   habitTrends: DailyHabitTrend[]
   habitEmotionLinks: HabitEmotionLinkInsight[]
+}
+
+export interface RecommendationItem {
+  id: number
+  batch_id: number
+  position: number
+  category: string
+  kind: RecommendationKind
+  title: string
+  rationale: string
+  action_payload: Record<string, unknown>
+  estimated_duration_minutes: number | null
+  follow_up_text: string | null
+  status: RecommendationStatus
+  completed_at: string | null
+  created_at: string
+}
+
+export interface RecommendationBatch {
+  id: number
+  user_id: number
+  category: string
+  batch_date: string
+  is_active: boolean
+  created_at: string
+  items: RecommendationItem[]
+}
+
+export interface RecommendationHistoryResponse {
+  batches: RecommendationBatch[]
+}
+
+export interface RecommendationGenerationRequest {
+  user_id: number
+  category: RecommendationCategory
+}
+
+export interface RecommendationInteractionRequest {
+  user_id: number
+  event_type: string
+  payload?: Record<string, unknown>
+}
+
+export interface UserHabit {
+  id: number
+  user_id: number
+  source_recommendation_item_id: number | null
+  name: string
+  category: string
+  cue_text: string | null
+  reason_text: string | null
+  is_active: boolean
+  created_at: string
+  archived_at: string | null
+}
+
+export interface DailyHabitChecklistItem {
+  habit: UserHabit
+  is_completed: boolean
+  completed_at: string | null
+}
+
+export interface DailyHabitChecklistResponse {
+  date: string
+  habits: DailyHabitChecklistItem[]
+}
+
+export interface HabitCheckRequest {
+  user_id: number
+  date?: string
+  completed: boolean
 }
