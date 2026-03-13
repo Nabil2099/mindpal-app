@@ -34,11 +34,6 @@ export default function ReflectionList({ reflections, activeId, onSelect, onDele
                 <p className="truncate text-sm font-semibold">{reflection.title}</p>
                 <div className="flex items-center gap-2 text-xs text-ink-700/70">
                   <span>{new Date(reflection.created_at).toLocaleDateString()}</span>
-                  {reflection.is_closed ? (
-                    <span className="rounded-full bg-clay-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-800">
-                      Closed
-                    </span>
-                  ) : null}
                 </div>
               </button>
               <button

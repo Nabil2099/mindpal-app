@@ -15,23 +15,13 @@ export default function ChatWindow({ onOpenNavigation, onOpenInsights }: ChatWin
   const [draft, setDraft] = useState('')
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const {
-    conversations,
     currentConversationId,
     messagesByConversation,
     sendMessage,
-    createConversation,
-    closeConversation,
     isSending,
     isInitializing,
-    isClosing,
     streamingMessageId,
   } = useAppState()
-
-  const currentConversation = useMemo(
-    () => conversations.find((conversation) => conversation.id === currentConversationId) ?? null,
-    [conversations, currentConversationId],
-  )
-  const isClosed = currentConversation?.is_closed ?? false
 
   const messages = useMemo(() => {
     if (!currentConversationId) {
@@ -128,22 +118,10 @@ export default function ChatWindow({ onOpenNavigation, onOpenInsights }: ChatWin
           >
             Today
           </button>
-          {currentConversationId ? (
-            <button
-              type="button"
-              onClick={() => void closeConversation(currentConversationId)}
-              disabled={isClosed || isClosing || isSending}
-              className="rounded-full border border-clay-200 bg-white px-3 py-1.5 text-xs font-semibold text-ink-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isClosed ? 'Closed' : isClosing ? 'Closing...' : 'Close Reflection'}
-            </button>
-          ) : null}
         </div>
         <div>
           <p className="text-lg font-semibold text-ink-900">Today's Reflection</p>
-          <p className="text-xs text-ink-700/75">
-            {isClosed ? 'This reflection is closed and saved to memory.' : 'Keep writing. You\'re doing meaningful work.'}
-          </p>
+          <p className="text-xs text-ink-700/75">Keep writing. You're doing meaningful work.</p>
         </div>
       </header>
 
@@ -152,11 +130,6 @@ export default function ChatWindow({ onOpenNavigation, onOpenInsights }: ChatWin
           <p className="rounded-lg border border-clay-200 bg-sand-100 px-3 py-2 text-xs text-ink-700/80">
             MindPal can reference your past chats in this account. Ask for quotes or timestamps if you want exact recall.
           </p>
-          {isClosed ? (
-            <div className="rounded-lg border border-clay-200 bg-white px-4 py-3 text-sm text-ink-700">
-              This reflection is now read-only. Start a new reflection if you want to continue the conversation.
-            </div>
-          ) : null}
           {isInitializing ? <p className="text-sm text-ink-700/70">Loading your reflection...</p> : null}
           {messages.map((message) => (
             <MessageBubble
@@ -175,18 +148,7 @@ export default function ChatWindow({ onOpenNavigation, onOpenInsights }: ChatWin
           <div ref={bottomRef} />
         </div>
       </div>
-      {isClosed ? (
-        <div className="border-t border-clay-200/70 px-4 py-4 sm:px-6">
-          <button
-            type="button"
-            onClick={() => void createConversation()}
-            className="rounded-[1rem] bg-clay-200 px-4 py-3 text-sm font-semibold text-ink-900 transition hover:bg-clay-300"
-          >
-            Start New Reflection
-          </button>
-        </div>
-      ) : null}
-      <ChatInput value={draft} onChange={setDraft} onSend={handleSend} isSending={isSending} disabled={!currentConversationId || isClosed} />
+      <ChatInput value={draft} onChange={setDraft} onSend={handleSend} isSending={isSending} disabled={!currentConversationId} />
     </section>
   )
 }

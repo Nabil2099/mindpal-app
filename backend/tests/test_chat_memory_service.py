@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 import unittest
 
 from sqlalchemy import select
@@ -111,6 +112,62 @@ class ChatMemoryServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second_created, 0)
         self.assertEqual(len(total_rows), 2)
         await session.close()
+
+    async def test_refresh_existing_memory_after_new_messages(self) -> None:
+        session = self.session_factory()
+        session.add(User(id=9))
+        await session.flush()
+
+        conversation = Conversation(user_id=9, title="Reopened", is_closed=True)
+        session.add(conversation)
+        await session.flush()
+
+        session.add(
+            Message(
+                conversation_id=conversation.id,
+                role=MessageRole.USER,
+                content="Work has been overwhelming and I need a realistic evening routine.",
+            )
+        )
+        session.add(
+            Message(
+                conversation_id=conversation.id,
+                role=MessageRole.ASSISTANT,
+                content="Let's pick one small evening step you can sustain.",
+            )
+        )
+        await session.flush()
+
+        llm = _FakeLLM()
+        service = ChatMemoryService(llm)
+
+        first_memory = await service.summarize_and_store_conversation(session, user_id=9, conversation_id=conversation.id)
+        self.assertIsNotNone(first_memory)
+        self.assertEqual(llm.calls, 1)
+
+        # Force the existing memory timestamp old to simulate a prior close cycle.
+        first_memory.created_at = datetime(2000, 1, 1)
+
+        session.add(
+            Message(
+                conversation_id=conversation.id,
+                role=MessageRole.USER,
+                content="I also notice late scrolling makes sleep much worse.",
+            )
+        )
+        await session.flush()
+
+        refreshed_memory = await service.summarize_and_store_conversation(
+            session,
+            user_id=9,
+            conversation_id=conversation.id,
+            refresh_existing=True,
+        )
+        await session.commit()
+
+        self.assertIsNotNone(refreshed_memory)
+        self.assertEqual(refreshed_memory.id, first_memory.id)
+        self.assertEqual(llm.calls, 2)
 
 
 if __name__ == "__main__":

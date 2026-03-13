@@ -18,7 +18,14 @@ from app.models.user_chat_memory import UserChatMemory
 
 
 class _FakeMemoryService:
-    async def summarize_and_store_conversation(self, db: AsyncSession, *, user_id: int, conversation_id: int):
+    async def summarize_and_store_conversation(
+        self,
+        db: AsyncSession,
+        *,
+        user_id: int,
+        conversation_id: int,
+        refresh_existing: bool = False,
+    ):
         db.add(
             UserChatMemory(
                 user_id=user_id,
@@ -88,6 +95,29 @@ class ConversationCloseApiTests(unittest.TestCase):
         )
         self.assertEqual(chat_response.status_code, 409)
         self.assertEqual(chat_response.json()["detail"], "Conversation is closed")
+
+    def test_reopen_endpoint_reopens_closed_conversation(self) -> None:
+        close_response = self.client.post("/conversations/4/close", params={"user_id": 1})
+        self.assertEqual(close_response.status_code, 200)
+        self.assertTrue(close_response.json()["is_closed"])
+
+        reopen_response = self.client.post("/conversations/4/reopen", params={"user_id": 1})
+        self.assertEqual(reopen_response.status_code, 200)
+        self.assertFalse(reopen_response.json()["is_closed"])
+        self.assertIsNone(reopen_response.json()["closed_at"])
+
+        conversation, _ = asyncio.run(self._fetch_state())
+        self.assertFalse(conversation.is_closed)
+        self.assertIsNone(conversation.closed_at)
+
+    def test_close_endpoint_is_idempotent(self) -> None:
+        first = self.client.post("/conversations/4/close", params={"user_id": 1})
+        self.assertEqual(first.status_code, 200)
+        second = self.client.post("/conversations/4/close", params={"user_id": 1})
+        self.assertEqual(second.status_code, 200)
+
+        _, memories = asyncio.run(self._fetch_state())
+        self.assertEqual(len(memories), 1)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -39,12 +40,18 @@ class ChatMemoryService:
         *,
         user_id: int,
         conversation_id: int,
+        refresh_existing: bool = False,
     ) -> UserChatMemory | None:
         existing = (
             await db.execute(select(UserChatMemory).where(UserChatMemory.chat_id == conversation_id))
         ).scalar_one_or_none()
-        if existing is not None:
+        if existing is not None and not refresh_existing:
             return existing
+
+        if existing is not None and refresh_existing:
+            latest_message_at = await self._latest_message_timestamp(db, conversation_id=conversation_id)
+            if latest_message_at is None or latest_message_at <= existing.created_at:
+                return existing
 
         rows = (
             await db.execute(
@@ -55,21 +62,33 @@ class ChatMemoryService:
             )
         ).all()
         if not rows:
-            return None
+            return existing
 
         transcript = self._build_transcript(rows)
         if self._should_skip_summary(transcript):
-            return None
+            return existing
 
         summary = await self._generate_summary(transcript)
         if not summary:
-            return None
+            return existing
+
+        if existing is not None:
+            existing.summary = summary
+            existing.created_at = datetime.utcnow()
+            await db.flush()
+            await self.prune_user_memories(db, user_id=user_id)
+            return existing
 
         memory = UserChatMemory(user_id=user_id, chat_id=conversation_id, summary=summary)
         db.add(memory)
         await db.flush()
         await self.prune_user_memories(db, user_id=user_id)
         return memory
+
+    async def _latest_message_timestamp(self, db: AsyncSession, *, conversation_id: int) -> datetime | None:
+        return (
+            await db.execute(select(func.max(Message.timestamp)).where(Message.conversation_id == conversation_id))
+        ).scalar_one_or_none()
 
     async def prune_user_memories(self, db: AsyncSession, *, user_id: int) -> None:
         rows = (

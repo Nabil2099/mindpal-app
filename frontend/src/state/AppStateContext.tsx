@@ -18,6 +18,7 @@ import {
   getHabitInsights,
   getOverviewInsights,
   getTimeInsights,
+  reopenConversation as reopenConversationApi,
   streamChat,
 } from '../services/api'
 import type { Conversation, InsightsBundle, Message } from '../types/api'
@@ -106,13 +107,58 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const createConversation = useCallback(async () => {
     setError(null)
     try {
+      const openConversationIds = conversations.filter((conversation) => !conversation.is_closed).map((conversation) => conversation.id)
+      if (openConversationIds.length) {
+        const closedConversations: Conversation[] = []
+        const deletedConversationIds: number[] = []
+
+        for (const openConversationId of openConversationIds) {
+          let messageCount = messagesByConversation[openConversationId]?.length
+
+          if (messageCount === undefined) {
+            try {
+              const response = await getConversationMessages(openConversationId, USER_ID)
+              messageCount = response.messages.length
+            } catch {
+              // If message lookup fails, avoid accidental deletion and treat as non-empty.
+              messageCount = 1
+            }
+          }
+
+          if (messageCount === 0) {
+            await deleteConversationApi(openConversationId)
+            deletedConversationIds.push(openConversationId)
+            continue
+          }
+
+          closedConversations.push(await closeConversationApi(openConversationId, USER_ID))
+        }
+
+        const closedById = new Map(closedConversations.map((conversation) => [conversation.id, conversation]))
+        setConversations((prev) =>
+          sortConversations(
+            prev
+              .filter((conversation) => !deletedConversationIds.includes(conversation.id))
+              .map((conversation) => closedById.get(conversation.id) ?? conversation),
+          ),
+        )
+
+        if (deletedConversationIds.length) {
+          setMessagesByConversation((prev) =>
+            Object.fromEntries(
+              Object.entries(prev).filter(([key]) => !deletedConversationIds.includes(Number(key))),
+            ) as Record<number, Message[]>,
+          )
+        }
+      }
+
       const created = await createConversationApi({ user_id: USER_ID, title: 'New Reflection' })
       setConversations((prev) => sortConversations([created, ...prev]))
       await selectConversation(created.id)
     } catch {
       setError('Could not create a new reflection.')
     }
-  }, [selectConversation])
+  }, [conversations, messagesByConversation, selectConversation])
 
   const closeConversation = useCallback(async (id: number) => {
     setError(null)
@@ -176,11 +222,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       let conversationId = currentConversationId
       const activeConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null
 
-      if (activeConversation?.is_closed) {
-        setError('This reflection is closed. Start a new one to keep chatting.')
-        return
-      }
-
       if (!conversationId) {
         try {
           const created = await createConversationApi({ user_id: USER_ID, title: 'New Reflection' })
@@ -191,6 +232,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           setMessagesByConversation((prev) => ({ ...prev, [created.id]: [] }))
         } catch {
           setError('Could not create a new reflection.')
+          return
+        }
+      }
+
+      if (activeConversation?.is_closed) {
+        try {
+          const reopened = await reopenConversationApi(activeConversation.id, USER_ID)
+          setConversations((prev) =>
+            sortConversations(prev.map((conversation) => (conversation.id === reopened.id ? reopened : conversation))),
+          )
+        } catch {
+          setError('Could not reopen this reflection. Please try again.')
           return
         }
       }

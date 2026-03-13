@@ -66,10 +66,36 @@ async def close_conversation(
         conversation.is_closed = True
         conversation.closed_at = datetime.utcnow()
         try:
-            await memory_service.summarize_and_store_conversation(db, user_id=user_id, conversation_id=id)
+            await memory_service.summarize_and_store_conversation(
+                db,
+                user_id=user_id,
+                conversation_id=id,
+                refresh_existing=True,
+            )
         except Exception:  # noqa: BLE001
             logger.exception("Failed to generate chat memory for conversation_id=%s user_id=%s", id, user_id)
 
+        await db.commit()
+        await db.refresh(conversation)
+
+    return ConversationResponse.model_validate(conversation, from_attributes=True)
+
+
+@router.post("/conversations/{id}/reopen", response_model=ConversationResponse)
+async def reopen_conversation(
+    id: int,
+    user_id: int,
+    db: AsyncSession = Depends(get_db_session),
+) -> ConversationResponse:
+    conversation = (
+        await db.execute(select(Conversation).where(Conversation.id == id, Conversation.user_id == user_id))
+    ).scalar_one_or_none()
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found for this user")
+
+    if conversation.is_closed:
+        conversation.is_closed = False
+        conversation.closed_at = None
         await db.commit()
         await db.refresh(conversation)
 
