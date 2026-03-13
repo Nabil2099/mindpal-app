@@ -1,0 +1,92 @@
+from __future__ import annotations
+
+from datetime import datetime
+from pathlib import Path
+import sys
+import unittest
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from app.database.base import Base
+from app.models.recommendation_batch import RecommendationBatch
+from app.models.recommendation_item import RecommendationItem
+from app.models.user_habit import UserHabit
+from app.services.recommendation_service import RecommendationService
+
+
+class RecommendationServiceTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        self.engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+        async with self.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        self.session_factory = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
+        self.fixed_now = datetime(2026, 3, 13, 9, 30, 0)
+        self.service = RecommendationService(now_provider=lambda: self.fixed_now)
+        self.original_groq_key = self.service.settings.groq_api_key
+        self.service.settings.groq_api_key = ""
+
+    async def asyncTearDown(self) -> None:
+        self.service.settings.groq_api_key = self.original_groq_key
+        await self.engine.dispose()
+
+    async def test_generate_batch_replaces_active_batch_but_keeps_history(self) -> None:
+        async with self.session_factory() as session:
+            first = await self.service.generate_batch(session, user_id=1, category="balance")
+            second = await self.service.generate_batch(session, user_id=1, category="focus")
+
+            batches = (
+                await session.execute(
+                    select(RecommendationBatch)
+                    .where(RecommendationBatch.user_id == 1)
+                    .order_by(RecommendationBatch.id.asc())
+                )
+            ).scalars().all()
+
+            self.assertEqual(len(batches), 2)
+            self.assertFalse(batches[0].is_active)
+            self.assertTrue(batches[1].is_active)
+            self.assertEqual(first.id, batches[0].id)
+            self.assertEqual(second.id, batches[1].id)
+            self.assertEqual(len(first.items), 4)
+            self.assertEqual(len(second.items), 4)
+
+    async def test_adopt_habit_and_complete_daily_checklist(self) -> None:
+        async with self.session_factory() as session:
+            batch = await self.service.generate_batch(session, user_id=8, category="calm")
+            habit_item = next(item for item in batch.items if item.kind == "habit")
+
+            habit = await self.service.adopt_habit(session, user_id=8, item_id=habit_item.id)
+            self.assertIsInstance(habit, UserHabit)
+            self.assertEqual(habit.source_recommendation_item_id, habit_item.id)
+
+            checklist_before = await self.service.get_daily_checklist(session, user_id=8, for_date=self.fixed_now.date())
+            self.assertEqual(len(checklist_before), 1)
+            self.assertFalse(checklist_before[0][1] is not None and checklist_before[0][1].is_completed)
+
+            check = await self.service.set_habit_check(
+                session,
+                user_id=8,
+                habit_id=habit.id,
+                for_date=self.fixed_now.date(),
+                completed=True,
+            )
+            self.assertTrue(check.is_completed)
+
+            checklist_after = await self.service.get_daily_checklist(session, user_id=8, for_date=self.fixed_now.date())
+            self.assertEqual(len(checklist_after), 1)
+            self.assertIsNotNone(checklist_after[0][1])
+            self.assertTrue(checklist_after[0][1].is_completed)
+
+            stored_items = (
+                await session.execute(select(RecommendationItem).where(RecommendationItem.batch_id == batch.id))
+            ).scalars().all()
+            self.assertEqual(len(stored_items), 4)
+
+
+if __name__ == "__main__":
+    unittest.main()

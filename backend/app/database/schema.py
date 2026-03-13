@@ -24,3 +24,118 @@ def _ensure_schema_updates(sync_conn: Connection) -> None:
 
     if "closed_at" not in columns:
         sync_conn.execute(text("ALTER TABLE conversations ADD COLUMN closed_at DATETIME"))
+
+    sync_conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS recommendation_batches (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                category VARCHAR(32) NOT NULL,
+                batch_date DATE NOT NULL,
+                is_active BOOLEAN NOT NULL DEFAULT 1,
+                context_summary_json JSON NOT NULL DEFAULT '{}',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+            """
+        )
+    )
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_batches_user_id ON recommendation_batches (user_id)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_batches_category ON recommendation_batches (category)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_batches_batch_date ON recommendation_batches (batch_date)"))
+
+    sync_conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS recommendation_items (
+                id INTEGER PRIMARY KEY,
+                batch_id INTEGER NOT NULL,
+                position INTEGER NOT NULL,
+                category VARCHAR(32) NOT NULL,
+                kind VARCHAR(32) NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                rationale TEXT NOT NULL,
+                action_payload_json JSON NOT NULL DEFAULT '{}',
+                estimated_duration_minutes INTEGER,
+                follow_up_text TEXT,
+                status VARCHAR(32) NOT NULL DEFAULT 'pending',
+                completed_at DATETIME,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(batch_id) REFERENCES recommendation_batches(id) ON DELETE CASCADE
+            )
+            """
+        )
+    )
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_items_batch_id ON recommendation_items (batch_id)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_items_kind ON recommendation_items (kind)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_items_status ON recommendation_items (status)"))
+
+    sync_conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS recommendation_interactions (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                batch_id INTEGER,
+                item_id INTEGER,
+                event_type VARCHAR(64) NOT NULL,
+                event_payload_json JSON NOT NULL DEFAULT '{}',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(batch_id) REFERENCES recommendation_batches(id) ON DELETE CASCADE,
+                FOREIGN KEY(item_id) REFERENCES recommendation_items(id) ON DELETE CASCADE
+            )
+            """
+        )
+    )
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_interactions_user_id ON recommendation_interactions (user_id)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_interactions_item_id ON recommendation_interactions (item_id)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recommendation_interactions_event_type ON recommendation_interactions (event_type)"))
+
+    sync_conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS user_habits (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                source_recommendation_item_id INTEGER,
+                name VARCHAR(255) NOT NULL,
+                category VARCHAR(32) NOT NULL,
+                cue_text TEXT,
+                reason_text TEXT,
+                is_active BOOLEAN NOT NULL DEFAULT 1,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                archived_at DATETIME,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(source_recommendation_item_id) REFERENCES recommendation_items(id) ON DELETE SET NULL
+            )
+            """
+        )
+    )
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_habits_user_id ON user_habits (user_id)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_habits_category ON user_habits (category)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_habits_is_active ON user_habits (is_active)"))
+
+    sync_conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS user_habit_checks (
+                id INTEGER PRIMARY KEY,
+                habit_id INTEGER NOT NULL,
+                check_date DATE NOT NULL,
+                is_completed BOOLEAN NOT NULL DEFAULT 1,
+                completed_at DATETIME,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(habit_id) REFERENCES user_habits(id) ON DELETE CASCADE
+            )
+            """
+        )
+    )
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_habit_checks_habit_id ON user_habit_checks (habit_id)"))
+    sync_conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_habit_checks_check_date ON user_habit_checks (check_date)"))
+    sync_conn.execute(
+        text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS ux_user_habit_checks_habit_date ON user_habit_checks (habit_id, check_date)"
+        )
+    )

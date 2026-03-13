@@ -14,3 +14,10 @@ class User(Base):
 
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
     chat_memories = relationship("UserChatMemory", back_populates="user", cascade="all, delete-orphan")
+    recommendation_batches = relationship("RecommendationBatch", back_populates="user", cascade="all, delete-orphan")
+    recommendation_interactions = relationship(
+        "RecommendationInteraction",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    habits = relationship("UserHabit", back_populates="user", cascade="all, delete-orphan")
