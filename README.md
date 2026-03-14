@@ -63,6 +63,9 @@ MindPal (Root)
 
 4. **Set environment variables:**
    ```bash
+   # Windows PowerShell
+   Copy-Item .env.example .env
+   # macOS/Linux
    cp .env.example .env
    # Edit .env and add your GROQ_API_KEY
    ```
@@ -73,6 +76,15 @@ MindPal (Root)
    ```
 
    The API will be available at `http://localhost:8000`.
+
+6. **Run the frontend (new terminal):**
+   ```bash
+   cd ../frontend
+   npm install
+   npm run dev
+   ```
+
+   The frontend will be available at `http://localhost:5173`.
 
 ## API Endpoints
 
@@ -106,6 +118,12 @@ For backend-specific configuration, service documentation, and implementation de
 - Knowledge base documents are automatically seeded into Chroma on first startup.
 - Graph state is persisted to `mindpal_graph.json` for reproducibility.
 - Local vector DB and generated artifacts are excluded from version control for production cleanliness.
+
+## Safety Notes
+
+- Never commit `.env` files or API keys. Use `.env.example` as the template for shared configuration.
+- Keep local databases (`*.db`, `*.sqlite3`) and vector stores (`backend/chroma_data/`) out of git.
+- Validate incoming data at API boundaries and avoid logging secrets in request/response payloads.
 
 ## Development
 

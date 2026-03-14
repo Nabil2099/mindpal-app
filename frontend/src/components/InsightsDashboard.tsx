@@ -53,7 +53,34 @@ function formatShortDate(date: string): string {
   return `${weekday} · ${monthDay}`
 }
 
-const habitSliceColors = ['#b69173', '#c4a88f', '#d2bca7', '#e0d0c1', '#d4c7ba']
+const warmChartPalette = ['#bf8a72', '#c89a77', '#d7b08a', '#c9958a', '#b79282', '#e2cab0']
+
+const emotionColorMap: Record<string, string> = {
+  joy: '#e2cab0',
+  excitement: '#c9958a',
+  gratitude: '#c89a77',
+  calm: '#b79282',
+  neutral: '#d8bea4',
+  anxiety: '#d6a88c',
+  fear: '#d4b189',
+  frustration: '#bd8777',
+  sadness: '#ad8a7a',
+  anger: '#bf8476',
+}
+
+const chartTrackColor = '#eee2d5'
+const chartSurfaceColor = '#f8f1e9'
+const chartStrokeColor = '#f5ebe0'
+const chartTooltipBorderColor = '#d9c4b1'
+const chartBarShadow = '0 9px 18px -14px rgba(104, 74, 54, 0.28)'
+
+function getChartColor(index: number): string {
+  return warmChartPalette[index % warmChartPalette.length]
+}
+
+function getEmotionChartColor(label: string, index: number): string {
+  return emotionColorMap[normalizeEmotionLabel(label)] ?? getChartColor(index)
+}
 
 export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboardProps) {
   const { insights, fetchInsights, isLoadingInsights, conversations, messagesByConversation } = useAppState()
@@ -116,9 +143,10 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
   const [daysBack, setDaysBack] = useState(0)
 
   const emotionFrequencyData = useMemo(() => {
-    const emotions = insights.emotions.map((item) => ({
+    const emotions = insights.emotions.map((item, index) => ({
       label: prettify(item.label),
       count: item.count,
+      color: getEmotionChartColor(item.label, index),
     }))
     const maxCount = Math.max(...emotions.map((item) => item.count), 1)
 
@@ -137,21 +165,55 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
         habit: prettify(row.habit || 'Unknown'),
         count: row.count,
         percentage: total > 0 ? Math.round((row.count / total) * 100) : 0,
-        color: habitSliceColors[index % habitSliceColors.length],
+        color: getChartColor(index),
       }))
     },
     [insights.habits, insights.overview],
   )
 
-  const associationData = useMemo(
-    () =>
-      insights.habitEmotionLinks.slice(0, 6).map((row) => ({
+  const associationData = useMemo(() => {
+    const links = insights.habitEmotionLinks.slice(0, 6).map((row, index) => {
+      const strengthPct = Number.isFinite(row.link_strength) ? row.link_strength * 100 : 0
+      return {
         habit: prettify(row.habit),
         emotion: prettify(row.emotion),
-        link_strength_pct: Math.round(row.link_strength * 100),
-      })),
-    [insights.habitEmotionLinks],
-  )
+        coOccurrence: row.co_occurrence,
+        habitTotal: row.habit_total,
+        linkStrengthLabel: `${strengthPct.toFixed(1)}%`,
+        color: getEmotionChartColor(row.emotion, index),
+      }
+    })
+
+    const grouped = new Map<
+      string,
+      {
+        habit: string
+        links: {
+          emotion: string
+          coOccurrence: number
+          habitTotal: number
+          linkStrengthLabel: string
+          color: string
+        }[]
+      }
+    >()
+
+    links.forEach((link) => {
+      if (!grouped.has(link.habit)) {
+        grouped.set(link.habit, { habit: link.habit, links: [] })
+      }
+
+      grouped.get(link.habit)?.links.push({
+        emotion: link.emotion,
+        coOccurrence: link.coOccurrence,
+        habitTotal: link.habitTotal,
+        linkStrengthLabel: link.linkStrengthLabel,
+        color: link.color,
+      })
+    })
+
+    return Array.from(grouped.values())
+  }, [insights.habitEmotionLinks])
 
   const widgetDayData = useMemo(() => {
     const trends = insights.emotionTrends
@@ -160,10 +222,11 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
     const day = trends[idx]
     if (!day) return null
     const total = day.total || day.emotions.reduce((s, e) => s + e.count, 0)
-    const emotions = day.emotions.map((e) => ({
+    const emotions = day.emotions.map((e, index) => ({
       label: prettify(e.label),
       count: e.count,
       pct: total > 0 ? Math.round((e.count / total) * 100) : 0,
+      color: getEmotionChartColor(e.label, index),
     }))
     return {
       dateLabel: formatShortDate(day.date),
@@ -222,15 +285,22 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
 
               {emotionFrequencyData.length ? (
                 <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] items-end gap-3 sm:gap-4">
-                  {emotionFrequencyData.map((item, index) => (
+                  {emotionFrequencyData.map((item) => (
                     <div key={item.label} className="flex w-full flex-col items-center gap-2.5">
                       <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-700/75 sm:text-xs">
                         {item.count}
                       </span>
-                      <div className="flex h-44 w-full max-w-[100px] items-end justify-center rounded-[1.15rem] bg-sand-50/95 p-1.5 sm:h-48 sm:max-w-[110px]">
+                      <div
+                        className="flex h-44 w-full max-w-[100px] items-end justify-center rounded-[1.15rem] p-1.5 sm:h-48 sm:max-w-[110px]"
+                        style={{ backgroundColor: chartSurfaceColor }}
+                      >
                         <div
-                          className={`w-full rounded-[0.95rem] transition-all duration-300 ${index === 0 ? 'bg-clay-300/95 shadow-[0_7px_18px_-13px_rgba(102,73,45,0.55)]' : 'bg-clay-100/95'}`}
-                          style={{ height: `${item.height}%` }}
+                          className="w-full rounded-[0.95rem] transition-all duration-300"
+                          style={{
+                            height: `${item.height}%`,
+                            backgroundColor: item.color,
+                            boxShadow: chartBarShadow,
+                          }}
                         />
                       </div>
                       <span className="min-h-[2.2rem] text-center text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-ink-700/80 sm:min-h-[2.35rem] sm:text-xs">
@@ -252,7 +322,7 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
 
               {habitPieData.length ? (
                 <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:items-center">
-                  <div className="h-56 w-full rounded-soft border border-clay-100 bg-sand-50/60 p-2">
+                  <div className="h-56 w-full rounded-soft border border-clay-100 p-2" style={{ backgroundColor: chartSurfaceColor }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -260,7 +330,7 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
                           dataKey="count"
                           nameKey="habit"
                           outerRadius={92}
-                          stroke="#f8f4ee"
+                          stroke={chartStrokeColor}
                           strokeWidth={2}
                           isAnimationActive
                         >
@@ -274,7 +344,7 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
                             const entry = item?.payload as { percentage?: number } | undefined
                             return [`${numericValue} messages (${entry?.percentage ?? 0}%)`, 'Share']
                           }}
-                          contentStyle={{ borderRadius: '0.75rem', border: '1px solid #e3d7ca', fontSize: '12px' }}
+                          contentStyle={{ borderRadius: '0.75rem', border: `1px solid ${chartTooltipBorderColor}`, fontSize: '12px' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -311,15 +381,31 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
 
               {associationData.length ? (
                 <div className="mt-4 space-y-2.5">
-                  {associationData.map((row) => (
-                    <div key={`${row.habit}-${row.emotion}`} className="rounded-soft border border-clay-100 bg-sand-50/65 px-3.5 py-3">
+                  {associationData.map((group) => (
+                    <div key={group.habit} className="rounded-soft border border-clay-100 bg-sand-50/65 px-3.5 py-3">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-ink-900">{row.habit}</p>
-                        <span className="text-xs font-semibold text-ink-700">{row.link_strength_pct}%</span>
+                        <p className="text-sm font-semibold text-ink-900">{group.habit}</p>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-700/70">
+                          {group.links.length} {group.links.length === 1 ? 'link' : 'links'}
+                        </span>
                       </div>
-                      <p className="mt-0.5 text-xs text-ink-700">Linked with {row.emotion.toLowerCase()}</p>
-                      <div className="mt-2 h-2 rounded-full bg-clay-100">
-                        <div className="h-2 rounded-full bg-clay-300" style={{ width: `${Math.max(row.link_strength_pct, 4)}%` }} />
+
+                      <div className="mt-2.5 flex flex-wrap gap-2">
+                        {group.links.map((link) => (
+                          <span
+                            key={`${group.habit}-${link.emotion}`}
+                            className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs"
+                            style={{ borderColor: link.color, backgroundColor: `${link.color}1f` }}
+                          >
+                            <span className="font-semibold text-ink-900">{link.emotion}</span>
+                            <span className="text-ink-700/85">
+                              {link.coOccurrence}/{link.habitTotal}
+                            </span>
+                            <span className="rounded-full bg-white/75 px-1.5 py-0.5 text-[10px] font-semibold text-ink-700">
+                              {link.linkStrengthLabel}
+                            </span>
+                          </span>
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -393,10 +479,10 @@ export default function InsightsDashboard({ onOpenNavigation }: InsightsDashboar
                             <span className="font-medium text-ink-800">{e.label}</span>
                             <span className="font-semibold text-ink-800">{e.pct}%</span>
                           </div>
-                          <div className="mt-1 h-1.5 w-full rounded-full bg-clay-100">
+                          <div className="mt-1 h-1.5 w-full rounded-full" style={{ backgroundColor: chartTrackColor }}>
                             <div
-                              className="h-1.5 rounded-full bg-clay-300 transition-all"
-                              style={{ width: `${Math.max(e.pct, 4)}%` }}
+                              className="h-1.5 rounded-full transition-all"
+                              style={{ width: `${Math.max(e.pct, 4)}%`, backgroundColor: e.color }}
                             />
                           </div>
                         </div>

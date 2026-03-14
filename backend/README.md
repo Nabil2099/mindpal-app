@@ -42,6 +42,9 @@ pip install -r requirements.txt
 3. Copy env file and set `GROQ_API_KEY`:
 
 ```bash
+# Windows PowerShell
+Copy-Item .env.example .env
+# macOS/Linux
 cp .env.example .env
 ```
 
@@ -81,3 +84,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - Closing a conversation stores one short summary in `user_chat_memory`; MindPal injects the latest 10 summaries into future prompts.
 - Existing SQLite databases will pick up the new `conversations.is_closed` and `conversations.closed_at` columns at startup.
 - Historical closed conversations can be backfilled with `"d:/mindpal v5/.venv/Scripts/python.exe" scripts/backfill_chat_memories.py` from the `backend/` directory.
+
+## Safety
+
+- Keep `.env` local and never commit secrets.
+- Keep local DB/vector artifacts out of git (`*.db`, `*.sqlite3`, `chroma_data/`).
+- Use least-privilege API keys and rotate compromised keys immediately.

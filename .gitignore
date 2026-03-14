@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.python-version
 env/
 venv/
 .venv/
@@ -14,17 +15,27 @@ develop-eggs/
 *.egg-info/
 dist/
 node_modules/
+.pnpm-store/
+.npm/
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.hypothesis/
 .coverage
 .coverage.*
 htmlcov/
+coverage/
+.vite/
 
 # Environment variables & secrets
 .env
 .env.local
 .env.*.local
 !.env.example
+*.pem
+*.key
+*.crt
+*.p12
 
 # IDE & Editor
 .vscode/
@@ -43,6 +54,7 @@ mindpal_graph.json
 *.log
 tmp/
 temp/
+frontend/dist/
 
 # OS
 .DS_Store

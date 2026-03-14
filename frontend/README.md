@@ -1,12 +1,3 @@
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
 # MindPal Frontend
 
 A calm, minimal reflection interface for the MindPal FastAPI backend.
@@ -30,7 +21,10 @@ npm install
 2. Configure API base URL:
 
 ```bash
-copy .env.example .env
+# Windows PowerShell
+Copy-Item .env.example .env
+# macOS/Linux
+cp .env.example .env
 ```
 
 `VITE_API_BASE_URL` defaults to `http://localhost:8000`.
@@ -45,6 +39,12 @@ npm run dev
 
 ```bash
 npm run build
+```
+
+5. Preview production build:
+
+```bash
+npm run preview
 ```
 
 ## Main Screens
@@ -64,3 +64,9 @@ Run backend at `http://localhost:8000` with these endpoints available:
 - `GET /insights/emotions`
 - `GET /insights/habits`
 - `GET /insights/time`
+
+## Safety Notes
+
+- Do not commit `.env` files; only commit `.env.example`.
+- Keep API base URLs environment-specific (`VITE_API_BASE_URL`) instead of hardcoding.
+- Treat all rendered text as untrusted user content and keep escaping/sanitization defaults intact.
