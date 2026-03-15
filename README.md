@@ -130,9 +130,7 @@ For backend-specific configuration, service documentation, and implementation de
 - View API documentation at `http://localhost:8000/docs` (Swagger UI)
 - View alternate docs at `http://localhost:8000/redoc` (ReDoc)
 
-## License
 
-[Add your license here—e.g., MIT, Apache 2.0]
 
 ## Contributing
 
