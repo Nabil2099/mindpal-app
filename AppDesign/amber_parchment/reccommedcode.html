@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Plus+Jakarta+Sans:wght@200..800&amp;family=Fraunces:opsz,wght@9..144,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#795a4c",
+              "on-tertiary-container": "#fffbff",
+              "outline": "#81756b",
+              "surface-container": "#efeeea",
+              "primary": "#735638",
+              "inverse-on-surface": "#f2f0ec",
+              "surface-bright": "#fbf9f5",
+              "surface-container-lowest": "#ffffff",
+              "on-error": "#ffffff",
+              "on-tertiary-fixed": "#31130c",
+              "on-secondary-fixed": "#2c160b",
+              "background": "#fbf9f5",
+              "inverse-surface": "#30312e",
+              "primary-fixed-dim": "#e6c09a",
+              "on-primary-container": "#fffbff",
+              "on-primary-fixed": "#2b1701",
+              "on-error-container": "#93000a",
+              "secondary-fixed": "#ffdbcc",
+              "surface-container-low": "#f5f3ef",
+              "on-background": "#1b1c1a",
+              "tertiary": "#7c5148",
+              "tertiary-container": "#98695f",
+              "surface-dim": "#dbdad6",
+              "surface-tint": "#76593a",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#643c34",
+              "surface-container-highest": "#e4e2de",
+              "tertiary-fixed": "#ffdad3",
+              "primary-fixed": "#ffdcbc",
+              "on-surface": "#1b1c1a",
+              "secondary": "#775749",
+              "on-secondary-fixed-variant": "#5d4033",
+              "on-primary": "#ffffff",
+              "secondary-fixed-dim": "#e6bead",
+              "inverse-primary": "#e6c09a",
+              "surface-container-high": "#eae8e4",
+              "surface-variant": "#e4e2de",
+              "on-tertiary": "#ffffff",
+              "error-container": "#ffdad6",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#5c4125",
+              "primary-container": "#8e6f4e",
+              "on-surface-variant": "#4f453c",
+              "secondary-container": "#fed4c2",
+              "surface": "#fbf9f5",
+              "tertiary-fixed-dim": "#f1b9ae",
+              "outline-variant": "#d2c4b8"
+            },
+            fontFamily: {
+              "headline": ["Newsreader", "serif"],
+              "serif-display": ["Fraunces", "serif"],
+              "body": ["Plus Jakarta Sans", "sans-serif"],
+              "label": ["Plus Jakarta Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body { background-color: #fbf9f5; }
+      .editorial-shadow { box-shadow: 0 40px 40px -32px rgba(50, 40, 28, 0.15); }
+      .clay-gradient { background: linear-gradient(145deg, #735638 0%, #8e6f4e 100%); }
+      .soft-warm-gradient { background: linear-gradient(180deg, #ffffff 0%, #f5f3ef 100%); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body text-on-surface antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-6 py-4 max-w-screen-xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a serene person with soft lighting and neutral background colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3J1HQWcdaYaIMLImvuzxhq1XqQorzHz2nyskasyHRceDr1cfStz5yz27nAPTSC6GBltKT1bZKqawGA_Gxn1FW4fgNtArE_c_o5SRt02WQBJ9SbR4SsQ9cVv4xtDNe9dAqG54SoLJoKQkPrui6Omb3W_9iMcdPZyQJ5xZi8vuiSpbhwYoloGX4s2CswHELl44jrmvx9jTtfNt2DqXxeh_to8yRaURjtz8XAcSQhz78V2-kps8OV0Sxmo0HwP92dDNCAUvHCzfHnRVW"/>
+</div>
+<span class="text-2xl font-headline italic font-bold text-[#1b1c1a]">MindPal</span>
+</div>
+<button class="text-[#735638] hover:bg-[#f5f3ef]/50 p-2 rounded-full transition-colors active:scale-95 duration-300">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-screen-xl mx-auto space-y-10">
+<!-- Header Card: Tend to your garden -->
+<section class="soft-warm-gradient rounded-xl p-8 editorial-shadow relative overflow-hidden border border-outline-variant/10">
+<div class="relative z-10 max-w-md">
+<span class="text-[11px] tracking-[0.05em] font-medium uppercase text-primary mb-2 block">Personalized Growth</span>
+<h1 class="text-4xl md:text-5xl font-headline italic text-on-surface leading-tight mb-4">Tend to your garden</h1>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Your daily mental ecosystem thrives on small, intentional acts of care. Here are your curated paths for today.</p>
+<!-- Daily Progress -->
+<div class="bg-surface-container-lowest/60 backdrop-blur-sm rounded-lg p-5 inline-block min-w-[200px]">
+<div class="flex items-baseline gap-2 mb-3">
+<span class="text-4xl font-serif-display font-light text-primary">65%</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Daily Bloom</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 65%"></div>
+</div>
+</div>
+</div>
+<div class="absolute right-0 bottom-0 opacity-10 pointer-events-none transform translate-x-1/4 translate-y-1/4">
+<span class="material-symbols-outlined text-[240px]">eco</span>
+</div>
+</section>
+<!-- Category Selector -->
+<nav class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide no-scrollbar">
+<button class="flex-shrink-0 px-6 py-2.5 rounded-full clay-gradient text-white text-sm font-medium">All</button>
+<button class="flex-shrink-0 px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">Meditation</button>
+<button class="flex-shrink-0 px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">Journaling</button>
+<button class="flex-shrink-0 px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">Movement</button>
+<button class="flex-shrink-0 px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">Breath</button>
+<button class="flex-shrink-0 px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">Sleep</button>
+</nav>
+<!-- Recommendation Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Card 1 -->
+<article class="bg-surface-container-low border border-outline-variant/20 rounded-xl overflow-hidden group hover:bg-surface-container transition-colors duration-500">
+<div class="h-48 overflow-hidden relative">
+<img alt="Meditation" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Ethereal morning light hitting a quiet forest clearing with mist, peaceful and meditative atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhJbIi7oIY_jrz8Myib45MmjlspU7QqwmnMX80HI1QXcswkGR8lhEi0SMBIfcn_Wez6YPSRrJAzbSd3KuOc15mKxlMBs20m22aqU2n5rHPVPxCFdJ6UCXZajzaBhKpZeIv3DjslFhxSdJVvrwGGGkoOchAdBr5i6Yen4dJrJjYPA4ivSxZpJGHrzpbPlEicMyMvxOVPXpz79f_IxHGDka_vNb19dG1icSmm8zcza3MC8uNPoe7zDoWm4PwxXXEAO1va_GWcd-rCqxU"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="px-3 py-1 rounded-full bg-[#fbf9f5]/90 backdrop-blur-md text-[10px] font-bold tracking-wider uppercase text-primary">10 MIN</span>
+<span class="px-3 py-1 rounded-full bg-[#fbf9f5]/90 backdrop-blur-md text-[10px] font-bold tracking-wider uppercase text-primary">BREATHWORK</span>
+</div>
+</div>
+<div class="p-8">
+<h3 class="text-3xl font-serif-display text-on-surface mb-3 leading-tight">Anchor in the Present</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">A grounding sequence designed to steady your nervous system through rhythmic box breathing.</p>
+<button class="w-full py-4 rounded-full border border-primary text-primary font-semibold text-sm hover:bg-primary hover:text-white transition-all">Begin Practice</button>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container-low border border-outline-variant/20 rounded-xl overflow-hidden group hover:bg-surface-container transition-colors duration-500">
+<div class="h-48 overflow-hidden relative">
+<img alt="Journaling" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Overhead view of an open linen journal and a fountain pen on a textured warm wood surface with morning shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLUClLuVlYlLh6GYyN8H1IELZgA-6n12dkZHVqP1dZEQktpp2bGARnOXdeO4riZi8umrbJ6epRDxAb3KN8SGyNY7pYX44tEo_OmgU-26osmaDkSabDHIoLqdMSfGVi7FRZJSC5EFdE0GQ2KRo0TKIiW-mALKV3DJRD12QvQyoKk7STli_ABiONbs_CJkNhIJuHIMXz1ELj0LtFMaretuvswTR_h22GMf77Cag8fXPa4A0vAxR-T2IN9GHRbgTIX11yPfXUOHJo-tpm"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="px-3 py-1 rounded-full bg-[#fbf9f5]/90 backdrop-blur-md text-[10px] font-bold tracking-wider uppercase text-primary">5 MIN</span>
+<span class="px-3 py-1 rounded-full bg-[#fbf9f5]/90 backdrop-blur-md text-[10px] font-bold tracking-wider uppercase text-primary">REFLECTION</span>
+</div>
+</div>
+<div class="p-8">
+<h3 class="text-3xl font-serif-display text-on-surface mb-3 leading-tight">Unfolding the Day</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Guided prompts to navigate the complexities of your morning and set a clear emotional intention.</p>
+<button class="w-full py-4 rounded-full border border-primary text-primary font-semibold text-sm hover:bg-primary hover:text-white transition-all">Start Journal</button>
+</div>
+</article>
+<!-- Card 3 (Featured/Large) -->
+<article class="md:col-span-2 bg-[#efeeea] border border-outline-variant/20 rounded-xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center group">
+<div class="w-full md:w-1/2">
+<div class="flex gap-2 mb-6">
+<span class="px-3 py-1 rounded-full bg-secondary-container text-[10px] font-bold tracking-wider uppercase text-on-secondary-container">EVENING RITUAL</span>
+</div>
+<h3 class="text-4xl md:text-5xl font-headline italic text-on-surface mb-4">The Gentle Descent</h3>
+<p class="text-on-surface-variant text-lg leading-relaxed mb-8">Prepare your mind for deep restorative rest with our signature sonic landscape and progressive muscle relaxation.</p>
+<div class="flex items-center gap-4">
+<button class="px-8 py-4 rounded-full clay-gradient text-white font-semibold text-sm shadow-lg active:scale-95 transition-all">Listen Now</button>
+<span class="text-sm font-medium text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">schedule</span> 25 Minutes
+                        </span>
+</div>
+</div>
+<div class="w-full md:w-1/2 aspect-square md:aspect-video rounded-lg overflow-hidden editorial-shadow">
+<img alt="Sleep Ritual" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" data-alt="Abstract moody gradient of deep twilight purples and warm amber sunset tones with soft organic grain texture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqZYyj3p3-_CjFOslNlQZUY83AIS1fOaI9HTuwTVsFuFBqaZHu8kTKOy6T2EFapQSrCLbHQEhRj4vMVn1xt4c4-ZXtQ6GuI1OPe54_-rwfuzMi9FUl9FtJV4zVjciJlEbKZj-ZYreGnmS4Vp4H8MbHFSWQMKHtlvg4exX1jVr0GHSyCKUXLkgMghZM8xO_kb2zXgrvMPJXa86gw0leyJdjZ0IMLKhL1FZXd4wolNozIdv6bB_gxyPooNRUZbVY10l3fmZsJw2qqpep"/>
+</div>
+</article>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full bg-[#fbf9f5]/80 backdrop-blur-md z-50 rounded-t-[3rem] border-t border-[#d2c4b8]/15 shadow-[0_-40px_40px_-32px_rgba(50,40,28,0.15)]">
+<div class="flex justify-around items-center px-4 pb-8 pt-4">
+<a class="flex flex-col items-center justify-center text-[#4f453c] p-2 hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="text-[10px] font-semibold tracking-wider mt-1 uppercase">Chat</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#4f453c] p-2 hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-semibold tracking-wider mt-1 uppercase">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#e4e2de] text-[#1b1c1a] rounded-full px-5 py-2 scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-[10px] font-semibold tracking-wider mt-1 uppercase">Recommendations</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#4f453c] p-2 hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-semibold tracking-wider mt-1 uppercase">Settings</span>
+</a>
+</div>
+</nav>
+</body></html>

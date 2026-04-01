@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MindPal - Chat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Plus+Jakarta+Sans:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#795a4c",
+              "on-tertiary-container": "#fffbff",
+              "outline": "#81756b",
+              "surface-container": "#efeeea",
+              "primary": "#735638",
+              "inverse-on-surface": "#f2f0ec",
+              "surface-bright": "#fbf9f5",
+              "surface-container-lowest": "#ffffff",
+              "on-error": "#ffffff",
+              "on-tertiary-fixed": "#31130c",
+              "on-secondary-fixed": "#2c160b",
+              "background": "#fbf9f5",
+              "inverse-surface": "#30312e",
+              "primary-fixed-dim": "#e6c09a",
+              "on-primary-container": "#fffbff",
+              "on-primary-fixed": "#2b1701",
+              "on-error-container": "#93000a",
+              "secondary-fixed": "#ffdbcc",
+              "surface-container-low": "#f5f3ef",
+              "on-background": "#1b1c1a",
+              "tertiary": "#7c5148",
+              "tertiary-container": "#98695f",
+              "surface-dim": "#dbdad6",
+              "surface-tint": "#76593a",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#643c34",
+              "surface-container-highest": "#e4e2de",
+              "tertiary-fixed": "#ffdad3",
+              "primary-fixed": "#ffdcbc",
+              "on-surface": "#1b1c1a",
+              "secondary": "#775749",
+              "on-secondary-fixed-variant": "#5d4033",
+              "on-primary": "#ffffff",
+              "secondary-fixed-dim": "#e6bead",
+              "inverse-primary": "#e6c09a",
+              "surface-container-high": "#eae8e4",
+              "surface-variant": "#e4e2de",
+              "on-tertiary": "#ffffff",
+              "error-container": "#ffdad6",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#5c4125",
+              "primary-container": "#8e6f4e",
+              "on-surface-variant": "#4f453c",
+              "secondary-container": "#fed4c2",
+              "surface": "#fbf9f5",
+              "tertiary-fixed-dim": "#f1b9ae",
+              "outline-variant": "#d2c4b8"
+            },
+            fontFamily: {
+              "headline": ["Newsreader", "serif"],
+              "body": ["Plus Jakarta Sans", "sans-serif"],
+              "label": ["Plus Jakarta Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        background-color: #fbf9f5;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-6 py-4 max-w-screen-xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/15">
+<img alt="MP AI Assistant Profile" class="w-full h-full object-cover" data-alt="minimalist stylized avatar of a calm person with soft earthy tones and a peaceful expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrZIIcjwnNdHhGitKrWIeRFhQafp-Sic2qdK9rw1b2v0AebsdqhpfpCacT0IkIP7S1vjjhR9SmShIxJtAePfG4HEq6n8_689tZaMxzzw1dYiBMGPM5Ghyf2OoIKhPRv064wyLua2NMhE4YdjBeFj-DntUcI3Ubmc5gk1i8C_M32lhXj5nx6cVg5m7HLHlJ3IQPDoZMSwaQgl63uKkZEfMBcP2yepp18unFIszLI1aeai3Hed0GKWAxjIrtZsGsbQlbdf3uhHy0wiEN"/>
+</div>
+<div class="flex flex-col">
+<span class="text-2xl font-headline italic font-semibold text-[#1b1c1a]">MindPal</span>
+<span class="text-[10px] tracking-[0.05em] font-medium uppercase text-on-surface-variant">Your Daily Sanctuary</span>
+</div>
+</div>
+<button class="p-2 rounded-full hover:bg-[#f5f3ef]/50 transition-colors active:scale-95 duration-300 text-[#735638]">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center px-6 pt-24 pb-40 max-w-2xl mx-auto w-full">
+<!-- Hero Empty State -->
+<div class="text-center mb-12">
+<h1 class="font-headline text-5xl md:text-6xl text-on-surface font-light leading-tight mb-8">
+                Good morning, Maya. <br/>
+<span class="italic text-primary">What's on your heart?</span>
+</h1>
+<!-- Suggestion Chips -->
+<div class="flex flex-wrap justify-center gap-3">
+<button class="px-6 py-3 rounded-full border border-outline-variant bg-surface hover:bg-surface-container-low transition-all text-on-surface-variant text-sm font-medium shadow-sm hover:shadow-md">
+                    Reflect on my day
+                </button>
+<button class="px-6 py-3 rounded-full border border-outline-variant bg-surface hover:bg-surface-container-low transition-all text-on-surface-variant text-sm font-medium shadow-sm hover:shadow-md">
+                    Explore a difficult emotion
+                </button>
+<button class="px-6 py-3 rounded-full border border-outline-variant bg-surface hover:bg-surface-container-low transition-all text-on-surface-variant text-sm font-medium shadow-sm hover:shadow-md">
+                    Share a moment of gratitude
+                </button>
+</div>
+</div>
+<!-- Decorative Element: Faded Archive Texture -->
+<div class="absolute inset-0 -z-10 opacity-20 pointer-events-none overflow-hidden">
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary-container/10 rounded-full blur-[100px]"></div>
+</div>
+</main>
+<!-- Docked Input Bar -->
+<div class="fixed bottom-[88px] left-0 w-full px-6 flex justify-center z-40">
+<div class="w-full max-w-2xl bg-surface-container-lowest rounded-xl p-3 shadow-[0_-40px_40px_-32px_rgba(50,40,28,0.15)] border-t border-outline-variant/15">
+<div class="relative flex items-center">
+<div class="flex-grow">
+<input class="w-full bg-surface-container-low border border-outline-variant/30 rounded-full py-4 pl-6 pr-14 text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all" placeholder="Speak your heart..." type="text"/>
+</div>
+<button class="absolute right-2 w-10 h-10 flex items-center justify-center bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full shadow-lg active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">arrow_upward</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-2 px-4">
+<div class="flex gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">image</span>
+</button>
+</div>
+<p class="text-[10px] text-on-surface-variant/50 font-medium tracking-wide">MINDPAL AI</p>
+</div>
+</div>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-4 bg-[#fbf9f5]/80 backdrop-blur-md z-50 rounded-t-[3rem] border-t border-[#d2c4b8]/15 shadow-[0_-40px_40px_-32px_rgba(50,40,28,0.15)]">
+<!-- Active Tab: Chat -->
+<a class="flex flex-col items-center justify-center bg-[#e4e2de] text-[#1b1c1a] rounded-full px-5 py-2 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="text-[10px] font-semibold tracking-wider mt-1">Chat</span>
+</a>
+<!-- Inactive Tab: Insights -->
+<a class="flex flex-col items-center justify-center text-[#4f453c] p-2 hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-semibold tracking-wider mt-1">Insights</span>
+</a>
+<!-- Inactive Tab: Recommendations -->
+<a class="flex flex-col items-center justify-center text-[#4f453c] p-2 hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="text-[10px] font-semibold tracking-wider mt-1">Recommendations</span>
+</a>
+<!-- Inactive Tab: Settings -->
+<a class="flex flex-col items-center justify-center text-[#4f453c] p-2 hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-semibold tracking-wider mt-1">Settings</span>
+</a>
+</nav>
+</body></html>

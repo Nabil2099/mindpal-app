@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MindPal Insights</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#795a4c",
+                        "on-tertiary-container": "#fffbff",
+                        "outline": "#81756b",
+                        "surface-container": "#efeeea",
+                        "primary": "#735638",
+                        "inverse-on-surface": "#f2f0ec",
+                        "surface-bright": "#fbf9f5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#31130c",
+                        "on-secondary-fixed": "#2c160b",
+                        "background": "#fbf9f5",
+                        "inverse-surface": "#30312e",
+                        "primary-fixed-dim": "#e6c09a",
+                        "on-primary-container": "#fffbff",
+                        "on-primary-fixed": "#2b1701",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbcc",
+                        "surface-container-low": "#f5f3ef",
+                        "on-background": "#1b1c1a",
+                        "tertiary": "#7c5148",
+                        "tertiary-container": "#98695f",
+                        "surface-dim": "#dbdad6",
+                        "surface-tint": "#76593a",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#643c34",
+                        "surface-container-highest": "#e4e2de",
+                        "tertiary-fixed": "#ffdad3",
+                        "primary-fixed": "#ffdcbc",
+                        "on-surface": "#1b1c1a",
+                        "secondary": "#775749",
+                        "on-secondary-fixed-variant": "#5d4033",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#e6bead",
+                        "inverse-primary": "#e6c09a",
+                        "surface-container-high": "#eae8e4",
+                        "surface-variant": "#e4e2de",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#5c4125",
+                        "primary-container": "#8e6f4e",
+                        "on-surface-variant": "#4f453c",
+                        "secondary-container": "#fed4c2",
+                        "surface": "#fbf9f5",
+                        "tertiary-fixed-dim": "#f1b9ae",
+                        "outline-variant": "#d2c4b8",
+                        "ink-dark": "#1f1813"
+                    },
+                    fontFamily: {
+                        "headline": ["Newsreader", "serif"],
+                        "body": ["Plus Jakarta Sans", "sans-serif"],
+                        "label": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .editorial-shadow {
+            box-shadow: 0 40px 40px -32px rgba(50, 40, 28, 0.28);
+        }
+        .clay-gradient {
+            background: linear-gradient(145deg, #735638 0%, #8e6f4e 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/20">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 dark:bg-stone-950/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-6 py-4 max-w-screen-xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden">
+<img alt="Assistant" class="w-full h-full object-cover" data-alt="Soft focused portrait of a serene person in warm natural lighting, minimalist aesthetic, warm earthy tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACcUT1Ak9W5WEfbbGBbR7Hgc7HZ0CpcuGyrsbZk9fW_lcbydxOSg6caTDi6ZfY1GMNQJvgi-qyzoK0aRmIkua__t-UOqaMK3g4aVOqpr3IsFUXj7c4Pjek5A35q0wvqvS-5Q3dc0zaS70cMOxnWYp0FnzgqEu-SU289mVICmRGz6JHYGL8NbL2hJxZwSf9v49sCOsgcz6gOSsCAzX5b4-5yBlhO-x52WWeI0oVZQXB0Tg9XMYqd0t5J_DbbxSfZDW-l3EwGJLmIDzv"/>
+</div>
+<h1 class="text-2xl font-headline italic font-bold text-[#1b1c1a] dark:text-[#fbf9f5]">MindPal</h1>
+</div>
+<button class="material-symbols-outlined text-[#735638] dark:text-[#a98765] hover:bg-[#f5f3ef]/50 p-2 rounded-full transition-colors active:scale-95 duration-300">
+                menu
+            </button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-2xl mx-auto space-y-10">
+<!-- Day Navigator -->
+<nav class="flex items-center justify-between">
+<button class="w-12 h-12 flex items-center justify-center rounded-full border border-outline-variant/30 text-primary hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="text-center">
+<p class="text-[11px] tracking-[0.1em] font-medium font-label uppercase text-on-surface-variant">Wednesday</p>
+<h2 class="font-headline text-xl">October 24th</h2>
+</div>
+<button class="w-12 h-12 flex items-center justify-center rounded-full border border-outline-variant/30 text-primary hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</nav>
+<!-- Bento Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Streak Card -->
+<section class="bg-ink-dark rounded-xl p-8 flex flex-col justify-between editorial-shadow min-h-[220px]">
+<div>
+<span class="material-symbols-outlined text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<div>
+<h3 class="text-6xl font-headline text-white font-bold leading-none">12</h3>
+<p class="text-white font-label font-semibold text-sm tracking-wide mt-2">Day Streak</p>
+<p class="text-primary-fixed-dim/70 text-[12px] mt-1">You're finding your rhythm.</p>
+</div>
+</section>
+<!-- Progress Bars -->
+<section class="bg-surface-container-low rounded-xl p-8 space-y-6">
+<h4 class="text-[11px] tracking-[0.05em] font-medium font-label uppercase text-on-surface-variant">Daily Intention</h4>
+<div class="space-y-4">
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<span>Reflection</span>
+<span>80%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 80%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<span>Breathing</span>
+<span>45%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 45%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<span>Gratitude</span>
+<span>100%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Mood Summary Card -->
+<section class="bg-primary-container/10 rounded-xl p-10 editorial-shadow text-center relative overflow-hidden group">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+<p class="text-[11px] tracking-[0.15em] font-medium font-label uppercase text-primary mb-6">Today's Resonance</p>
+<h3 class="font-headline text-3xl md:text-4xl text-on-surface leading-tight">
+                "Your heart feels <span class="italic text-primary">Balanced</span> and <span class="italic text-primary">Tender</span> today."
+            </h3>
+</section>
+<!-- Emotion Frequency Chart -->
+<section class="bg-surface-container-low rounded-xl p-8">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h4 class="text-[11px] tracking-[0.05em] font-medium font-label uppercase text-on-surface-variant">Emotional Landscape</h4>
+<p class="font-headline text-lg mt-1">Weekly Frequency</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 rounded-full bg-surface-container-highest text-[10px] font-bold font-label uppercase tracking-wider">Oct 18-24</span>
+</div>
+</div>
+<div class="flex items-end justify-between h-48 gap-3">
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-[#e2cab0] rounded-t-full rounded-b-lg transition-all duration-500 hover:opacity-80" style="height: 90%"></div>
+<span class="text-[10px] font-bold font-label uppercase text-on-surface-variant tracking-tighter">Joy</span>
+</div>
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-[#b79282] rounded-t-full rounded-b-lg transition-all duration-500 hover:opacity-80" style="height: 65%"></div>
+<span class="text-[10px] font-bold font-label uppercase text-on-surface-variant tracking-tighter">Calm</span>
+</div>
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-[#d2c4b8] rounded-t-full rounded-b-lg transition-all duration-500 hover:opacity-80" style="height: 40%"></div>
+<span class="text-[10px] font-bold font-label uppercase text-on-surface-variant tracking-tighter">Focus</span>
+</div>
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-[#735638] rounded-t-full rounded-b-lg transition-all duration-500 hover:opacity-80" style="height: 25%"></div>
+<span class="text-[10px] font-bold font-label uppercase text-on-surface-variant tracking-tighter">Tender</span>
+</div>
+<div class="flex flex-col items-center flex-1 gap-3">
+<div class="w-full bg-[#a98765] rounded-t-full rounded-b-lg transition-all duration-500 hover:opacity-80" style="height: 55%"></div>
+<span class="text-[10px] font-bold font-label uppercase text-on-surface-variant tracking-tighter">Awe</span>
+</div>
+</div>
+</section>
+<!-- Insights Quote -->
+<footer class="text-center pt-8 pb-12 border-t border-outline-variant/15">
+<p class="font-headline text-on-surface-variant/60 italic text-lg px-8">
+                "The quiet mind is a vessel for self-discovery."
+            </p>
+</footer>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-4 bg-[#fbf9f5]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[3rem] border-t border-[#d2c4b8]/15 shadow-[0_-40px_40px_-32px_rgba(50,40,28,0.15)] z-50">
+<button class="flex flex-col items-center justify-center text-[#4f453c] dark:text-[#d2c4b8] p-2 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="text-[10px] font-semibold font-label tracking-wider mt-1">Chat</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-[#e4e2de] dark:bg-stone-800 text-[#1b1c1a] dark:text-[#fbf9f5] rounded-full px-5 py-2 scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="text-[10px] font-semibold font-label tracking-wider mt-1">Insights</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#4f453c] dark:text-[#d2c4b8] p-2 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-[10px] font-semibold font-label tracking-wider mt-1">Recommendations</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#4f453c] dark:text-[#d2c4b8] p-2 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[10px] font-semibold font-label tracking-wider mt-1">Settings</span>
+</button>
+</nav>
+</body></html>

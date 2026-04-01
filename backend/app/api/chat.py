@@ -1,7 +1,9 @@
 import json
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
+import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +13,7 @@ from app.rag.pipeline import RAGPipeline
 from app.schemas.chat import ChatRequest, ChatResponse
 
 router = APIRouter(tags=["chat"])
+logger = logging.getLogger(__name__)
 
 
 def _sse_event(event: str, data: dict) -> str:
@@ -31,12 +34,30 @@ async def chat(payload: ChatRequest, db: AsyncSession = Depends(get_db_session))
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Conversation is closed")
 
     pipeline = RAGPipeline()
-    result = await pipeline.run(
-        db=db,
-        conversation_id=payload.conversation_id,
-        user_id=payload.user_id,
-        user_text=payload.message,
-    )
+    try:
+        result = await pipeline.run(
+            db=db,
+            conversation_id=payload.conversation_id,
+            user_id=payload.user_id,
+            user_text=payload.message,
+        )
+    except httpx.HTTPStatusError as exc:
+        logger.exception("Chat upstream request failed")
+        if exc.response.status_code == status.HTTP_401_UNAUTHORIZED:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="AI provider authentication failed. Check GROQ_API_KEY.",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI provider is temporarily unavailable.",
+        ) from exc
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Chat pipeline failed")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Chat service is temporarily unavailable.",
+        ) from exc
     return ChatResponse.model_validate(result)
 
 
