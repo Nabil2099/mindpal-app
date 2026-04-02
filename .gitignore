@@ -64,7 +64,6 @@ ehthumbs.db
 # Poetry & packaging tools
 poetry.lock
 Pipfile.lock
-
-# Documentation & Design
-.github/
+#design
 AppDesign/
+.github/
