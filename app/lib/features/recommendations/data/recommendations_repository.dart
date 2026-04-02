@@ -83,6 +83,25 @@ class RecommendationsRepository {
       },
     );
   }
+
+  Future<RecommendationItem> completeItem(String itemId) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/recommendations/items/$itemId/complete',
+      queryParameters: <String, Object?>{'user_id': kUserId},
+    );
+    return RecommendationItem.fromJson(response.data ?? {});
+  }
+
+  Future<void> skipItem(String itemId) async {
+    await _dio.post<void>(
+      '/recommendations/items/$itemId/interactions',
+      data: <String, Object?>{
+        'user_id': kUserId,
+        'event_type': 'skipped',
+        'payload': <String, Object?>{},
+      },
+    );
+  }
 }
 
 @riverpod

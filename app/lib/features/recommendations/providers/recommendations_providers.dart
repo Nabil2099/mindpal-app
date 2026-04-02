@@ -147,6 +147,24 @@ class RecommendationsNotifier extends _$RecommendationsNotifier {
     );
   }
 
+  Future<void> completeItem(String itemId) async {
+    final repo = ref.read(recommendationsRepositoryProvider);
+    await repo.completeItem(itemId);
+    if (!ref.mounted) return;
+    state = state.copyWith(
+      batch: state.batch.where((e) => e.id != itemId).toList(),
+    );
+  }
+
+  Future<void> skipItem(String itemId) async {
+    final repo = ref.read(recommendationsRepositoryProvider);
+    await repo.skipItem(itemId);
+    if (!ref.mounted) return;
+    state = state.copyWith(
+      batch: state.batch.where((e) => e.id != itemId).toList(),
+    );
+  }
+
   Map<String, int> _buildTimers(List<RecommendationItem> items) {
     return {
       for (final item in items)

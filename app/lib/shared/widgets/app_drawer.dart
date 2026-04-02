@@ -266,7 +266,13 @@ class AppDrawer extends ConsumerWidget {
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (dialogContext) => AlertDialog(
-                              title: const Text('Delete Reflection'),
+                              title: Text(
+                                'Delete Reflection',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: MindPalColors.ink900,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               content: const Text(
                                 'Are you sure? This cannot be undone.',
                               ),

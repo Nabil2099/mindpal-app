@@ -42,7 +42,7 @@ final class RecommendationsNotifierProvider
 }
 
 String _$recommendationsNotifierHash() =>
-    r'f409a2149c4c17bec3e10700eb1c23a4b2b908e9';
+    r'6529cadbb52354f62c16b8eab8a712f5aa91168f';
 
 abstract class _$RecommendationsNotifier
     extends $Notifier<RecommendationsState> {

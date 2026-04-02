@@ -70,7 +70,7 @@ class RAGPipeline:
         self.graph = graph_service or GraphService()
         self.analytics = analytics_service or TimePatternAnalytics()
         self.memory = chat_memory_service or ChatMemoryService(self.llm)
-        self.persistent_memory = memory_service or MemoryService(self.llm, self.vector, self.graph)
+        self.persistent_memory = memory_service or MemoryService(self.llm, self.vector)
         self.analysis = analysis_service or AnalysisService(self.llm)
         self.placeholder_titles = {"New Reflection", "New Conversation"}
         self.max_generated_title_words = 2

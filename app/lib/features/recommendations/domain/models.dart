@@ -39,11 +39,17 @@ class HabitChecklistItem {
     required this.id,
     required this.name,
     required this.completed,
+    this.category,
+    this.cueText,
+    this.reasonText,
   });
 
   final String id;
   final String name;
   final bool completed;
+  final String? category;
+  final String? cueText;
+  final String? reasonText;
 
   factory HabitChecklistItem.fromJson(Map<String, dynamic> json) {
     final habit = json['habit'] as Map<String, dynamic>?;
@@ -52,14 +58,27 @@ class HabitChecklistItem {
       name: json['name']?.toString() ?? habit?['name']?.toString() ?? 'Habit',
       completed:
           json['completed'] as bool? ?? json['is_completed'] as bool? ?? false,
+      category: json['category']?.toString() ?? habit?['category']?.toString(),
+      cueText: json['cue_text']?.toString() ?? habit?['cue_text']?.toString(),
+      reasonText: json['reason_text']?.toString() ?? habit?['reason_text']?.toString(),
     );
   }
 
-  HabitChecklistItem copyWith({String? id, String? name, bool? completed}) {
+  HabitChecklistItem copyWith({
+    String? id,
+    String? name,
+    bool? completed,
+    String? category,
+    String? cueText,
+    String? reasonText,
+  }) {
     return HabitChecklistItem(
       id: id ?? this.id,
       name: name ?? this.name,
       completed: completed ?? this.completed,
+      category: category ?? this.category,
+      cueText: cueText ?? this.cueText,
+      reasonText: reasonText ?? this.reasonText,
     );
   }
 }
