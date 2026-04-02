@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:mindpal_app/features/settings/providers/settings_provider.dart';
 import 'package:mindpal_app/router.dart';
 import 'package:mindpal_app/theme.dart';
 
@@ -24,7 +23,6 @@ class MindPalApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
     final useDevicePreview = kIsWeb && !kReleaseMode;
     
     return MaterialApp.router(
@@ -34,8 +32,7 @@ class MindPalApp extends ConsumerWidget {
       locale: useDevicePreview ? DevicePreview.locale(context) : null,
       builder: useDevicePreview ? DevicePreview.appBuilder : null,
       theme: mindpalTheme,
-      darkTheme: mindpalDarkTheme,
-      themeMode: settings.darkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: ThemeMode.light, // Always use light mode
       routerConfig: router,
     );
   }

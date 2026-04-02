@@ -83,22 +83,6 @@ class SettingsScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Appearance', style: textTheme.titleLarge),
-                  const SizedBox(height: 10),
-                  _SwitchRow(
-                    icon: Icons.dark_mode_outlined,
-                    label: 'Dark mode',
-                    value: settings.darkMode,
-                    onChanged: (val) => settingsNotifier.toggleDarkMode(val),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            MindPalCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
                   Text('Reminders', style: textTheme.titleLarge),
                   const SizedBox(height: 10),
                   _SwitchRow(
