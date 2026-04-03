@@ -129,12 +129,22 @@ class RecommendationsNotifier extends _$RecommendationsNotifier {
     state = state.copyWith(checklist: next);
   }
 
+  Future<void> refreshChecklist() async {
+    try {
+      final repo = ref.read(recommendationsRepositoryProvider);
+      final checklist = await repo.checklist();
+      if (!ref.mounted) return;
+      state = state.copyWith(checklist: checklist);
+    } catch (_) {
+      // Ignore checklist refresh errors
+    }
+  }
+
   Future<void> addHabit(String name) async {
     final repo = ref.read(recommendationsRepositoryProvider);
     await repo.addHabit(name);
-    // Check if provider is still mounted after async operation
     if (!ref.mounted) return;
-    await refreshBatch();
+    await refreshChecklist();
   }
 
   Future<void> deleteHabit(String id) async {
@@ -154,6 +164,16 @@ class RecommendationsNotifier extends _$RecommendationsNotifier {
     state = state.copyWith(
       batch: state.batch.where((e) => e.id != itemId).toList(),
     );
+  }
+
+  Future<void> adoptHabit(String itemId) async {
+    final repo = ref.read(recommendationsRepositoryProvider);
+    await repo.adoptHabit(itemId);
+    if (!ref.mounted) return;
+    state = state.copyWith(
+      batch: state.batch.where((e) => e.id != itemId).toList(),
+    );
+    await refreshChecklist();
   }
 
   Future<void> skipItem(String itemId) async {

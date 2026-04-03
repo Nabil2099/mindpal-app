@@ -14,7 +14,8 @@ class RecommendationsScreen extends ConsumerStatefulWidget {
   const RecommendationsScreen({super.key});
 
   @override
-  ConsumerState<RecommendationsScreen> createState() => _RecommendationsScreenState();
+  ConsumerState<RecommendationsScreen> createState() =>
+      _RecommendationsScreenState();
 }
 
 class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
@@ -74,78 +75,83 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
           ),
         ],
       ),
-      body: state.loading
-          ? const Padding(
-              padding: EdgeInsets.all(20),
-              child: ShimmerLoader(
-                width: double.infinity,
-                height: 280,
-                radius: 24,
-              ),
-            )
-          : state.error != null
+      body:
+          state.loading
+              ? const Padding(
+                padding: EdgeInsets.all(20),
+                child: ShimmerLoader(
+                  width: double.infinity,
+                  height: 280,
+                  radius: 24,
+                ),
+              )
+              : state.error != null
               ? MindPalErrorPanel(
-                  title: 'Unable to load recommendations',
-                  message: state.error!,
-                  onRetry: notifier.refreshBatch,
-                )
+                title: 'Unable to load recommendations',
+                message: state.error!,
+                onRetry: notifier.refreshBatch,
+              )
               : state.batch.isEmpty && state.checklist.isEmpty
-                  ? MindPalEmptyPanel(
-                      title: 'No recommendations right now',
-                      subtitle:
-                          'Pull to refresh or generate a new batch tuned to your current mood trend.',
-                      actionLabel: 'Generate batch',
-                      icon: Icons.self_improvement_outlined,
-                      onAction: notifier.generateBatch,
-                    )
-                  : RefreshIndicator(
-                      onRefresh: notifier.refreshBatch,
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        children: [
-                          // Recommendation Carousel
-                          if (state.batch.isNotEmpty) ...[
-                            _RecommendationCarousel(
-                              items: state.batch,
-                              currentPage: _currentPage,
-                              pageController: _pageController,
-                              onPageChanged: (index) {
-                                setState(() => _currentPage = index);
-                              },
-                              onComplete: notifier.completeItem,
-                              onSkip: notifier.skipItem,
-                              onNext: () {
-                                if (_currentPage < state.batch.length - 1) {
-                                  _pageController.nextPage(
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.easeInOut,
-                                  );
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                          // Today's Habits Section
-                          _HabitsSection(
-                            items: state.checklist,
-                            isExpanded: _habitsExpanded,
-                            onToggleExpanded: () {
-                              setState(() => _habitsExpanded = !_habitsExpanded);
-                            },
-                            onToggle: notifier.toggleHabit,
-                            onAdd: notifier.addHabit,
-                            onDelete: notifier.deleteHabit,
-                          ),
-                          const SizedBox(height: 20),
-                          // Category Selector
-                          _DirectionCard(
-                            selectedCategory: state.selectedCategory,
-                            onSelect: notifier.selectCategory,
-                            onRefresh: notifier.generateBatch,
-                          ),
-                        ],
+              ? MindPalEmptyPanel(
+                title: 'No recommendations right now',
+                subtitle:
+                    'Pull to refresh or generate a new batch tuned to your current mood trend.',
+                actionLabel: 'Generate batch',
+                icon: Icons.self_improvement_outlined,
+                onAction: notifier.generateBatch,
+              )
+              : RefreshIndicator(
+                onRefresh: notifier.refreshBatch,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  children: [
+                    // Recommendation Carousel
+                    if (state.batch.isNotEmpty) ...[
+                      _RecommendationCarousel(
+                        items: state.batch,
+                        currentPage: _currentPage,
+                        pageController: _pageController,
+                        onPageChanged: (index) {
+                          setState(() => _currentPage = index);
+                        },
+                        onComplete: notifier.completeItem,
+                        onAdopt: notifier.adoptHabit,
+                        onSkip: notifier.skipItem,
+                        onNext: () {
+                          if (_currentPage < state.batch.length - 1) {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
                       ),
+                      const SizedBox(height: 20),
+                    ],
+                    // Today's Habits Section
+                    _HabitsSection(
+                      items: state.checklist,
+                      isExpanded: _habitsExpanded,
+                      onToggleExpanded: () {
+                        setState(() => _habitsExpanded = !_habitsExpanded);
+                      },
+                      onToggle: notifier.toggleHabit,
+                      onAdd: notifier.addHabit,
+                      onDelete: notifier.deleteHabit,
                     ),
+                    const SizedBox(height: 20),
+                    // Category Selector
+                    _DirectionCard(
+                      selectedCategory: state.selectedCategory,
+                      onSelect: notifier.selectCategory,
+                      onRefresh: notifier.generateBatch,
+                    ),
+                  ],
+                ),
+              ),
     );
   }
 }
@@ -157,6 +163,7 @@ class _RecommendationCarousel extends StatelessWidget {
     required this.pageController,
     required this.onPageChanged,
     required this.onComplete,
+    required this.onAdopt,
     required this.onSkip,
     required this.onNext,
   });
@@ -166,6 +173,7 @@ class _RecommendationCarousel extends StatelessWidget {
   final PageController pageController;
   final ValueChanged<int> onPageChanged;
   final Future<void> Function(String itemId) onComplete;
+  final Future<void> Function(String itemId) onAdopt;
   final Future<void> Function(String itemId) onSkip;
   final VoidCallback onNext;
 
@@ -204,7 +212,9 @@ class _RecommendationCarousel extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 '•',
-                style: TextStyle(color: MindPalColors.ink700.withValues(alpha: 0.5)),
+                style: TextStyle(
+                  color: MindPalColors.ink700.withValues(alpha: 0.5),
+                ),
               ),
               const SizedBox(width: 8),
               // Kind label
@@ -220,7 +230,10 @@ class _RecommendationCarousel extends StatelessWidget {
               const Spacer(),
               // Status badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: MindPalColors.sand100,
                   borderRadius: BorderRadius.circular(100),
@@ -244,8 +257,12 @@ class _RecommendationCarousel extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border(
-              left: BorderSide(color: MindPalColors.clay200.withValues(alpha: 0.8)),
-              right: BorderSide(color: MindPalColors.clay200.withValues(alpha: 0.8)),
+              left: BorderSide(
+                color: MindPalColors.clay200.withValues(alpha: 0.8),
+              ),
+              right: BorderSide(
+                color: MindPalColors.clay200.withValues(alpha: 0.8),
+              ),
             ),
           ),
           child: Row(
@@ -257,9 +274,10 @@ class _RecommendationCarousel extends StatelessWidget {
                 height: 8,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 decoration: BoxDecoration(
-                  color: index == safeCurrentPage
-                      ? MindPalColors.ink900
-                      : MindPalColors.clay200,
+                  color:
+                      index == safeCurrentPage
+                          ? MindPalColors.ink900
+                          : MindPalColors.clay200,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -277,6 +295,7 @@ class _RecommendationCarousel extends StatelessWidget {
               return _RecommendationPage(
                 item: items[index],
                 onComplete: onComplete,
+                onAdopt: onAdopt,
                 onSkip: onSkip,
                 onNext: onNext,
               );
@@ -296,12 +315,14 @@ class _RecommendationPage extends StatefulWidget {
   const _RecommendationPage({
     required this.item,
     required this.onComplete,
+    required this.onAdopt,
     required this.onSkip,
     required this.onNext,
   });
 
   final RecommendationItem item;
   final Future<void> Function(String itemId) onComplete;
+  final Future<void> Function(String itemId) onAdopt;
   final Future<void> Function(String itemId) onSkip;
   final VoidCallback onNext;
 
@@ -314,26 +335,29 @@ class _RecommendationPageState extends State<_RecommendationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-        border: Border.all(
-          color: _isExpanded
-              ? MindPalColors.ink900.withValues(alpha: 0.3)
-              : MindPalColors.clay200.withValues(alpha: 0.8),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(24),
+          ),
+          border: Border.all(
+            color:
+                _isExpanded
+                    ? MindPalColors.ink900.withValues(alpha: 0.3)
+                    : MindPalColors.clay200.withValues(alpha: 0.8),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row with title and expand icon - tappable
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row with title and expand icon - tappable
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
@@ -356,7 +380,10 @@ class _RecommendationPageState extends State<_RecommendationPage> {
                         spacing: 8,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: MindPalColors.sand100,
                               borderRadius: BorderRadius.circular(100),
@@ -372,13 +399,18 @@ class _RecommendationPageState extends State<_RecommendationPage> {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: MindPalColors.clay100,
                               borderRadius: BorderRadius.circular(100),
                             ),
                             child: Text(
-                              widget.item.kind.replaceAll('_', ' ').toUpperCase(),
+                              widget.item.kind
+                                  .replaceAll('_', ' ')
+                                  .toUpperCase(),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -400,9 +432,8 @@ class _RecommendationPageState extends State<_RecommendationPage> {
                 ),
               ],
             ),
-          ),
-          // Expanded content
-          if (_isExpanded) ...[
+            // Expanded content
+            if (_isExpanded) ...[
               const SizedBox(height: 16),
               // Context label
               Text(
@@ -450,7 +481,11 @@ class _RecommendationPageState extends State<_RecommendationPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => widget.onComplete(widget.item.id),
+                  onPressed:
+                      () =>
+                          widget.item.kind == 'adopt_habit'
+                              ? widget.onAdopt(widget.item.id)
+                              : widget.onComplete(widget.item.id),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: MindPalColors.ink900,
                     foregroundColor: Colors.white,
@@ -461,7 +496,9 @@ class _RecommendationPageState extends State<_RecommendationPage> {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Mark complete',
+                    widget.item.kind == 'adopt_habit'
+                        ? 'Adopt habit'
+                        : 'Mark complete',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -530,6 +567,7 @@ class _RecommendationPageState extends State<_RecommendationPage> {
             ],
           ],
         ),
+      ),
     );
   }
 }
@@ -573,9 +611,7 @@ class _HabitsSectionState extends State<_HabitsSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: MindPalColors.clay200.withValues(alpha: 0.8),
-        ),
+        border: Border.all(color: MindPalColors.clay200.withValues(alpha: 0.8)),
       ),
       child: Column(
         children: [
@@ -639,101 +675,114 @@ class _HabitsSectionState extends State<_HabitsSection> {
                 ),
               )
             else
-              ...widget.items.map((item) => _HabitRow(
-                    item: item,
-                    onToggle: widget.onToggle,
-                    onDelete: widget.onDelete,
-                  )),
+              ...widget.items.map(
+                (item) => _HabitRow(
+                  item: item,
+                  onToggle: widget.onToggle,
+                  onDelete: widget.onDelete,
+                ),
+              ),
             // Add habit form or button
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-              child: _showAddForm
-                  ? Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _controller,
-                            autofocus: true,
-                            decoration: InputDecoration(
-                              hintText: 'e.g. Morning Walk',
-                              contentPadding: const EdgeInsets.symmetric(
+              child:
+                  _showAddForm
+                      ? Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              autofocus: true,
+                              decoration: InputDecoration(
+                                hintText: 'e.g. Morning Walk',
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(100),
+                                  borderSide: BorderSide(
+                                    color: MindPalColors.clay300,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(100),
+                                  borderSide: BorderSide(
+                                    color: MindPalColors.clay300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(100),
+                                  borderSide: BorderSide(
+                                    color: MindPalColors.clay400,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final text = _controller.text.trim();
+                              if (text.isEmpty) return;
+                              await widget.onAdd(text);
+                              if (mounted) {
+                                _controller.clear();
+                                setState(() => _showAddForm = false);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: MindPalColors.ink900,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 12,
                               ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(100),
-                                borderSide: BorderSide(color: MindPalColors.clay300),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(100),
-                                borderSide: BorderSide(color: MindPalColors.clay300),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(100),
-                                borderSide: BorderSide(color: MindPalColors.clay400, width: 1.5),
-                              ),
+                              elevation: 0,
                             ),
+                            child: const Text('Add'),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final text = _controller.text.trim();
-                            if (text.isEmpty) return;
-                            await widget.onAdd(text);
-                            if (mounted) {
+                          const SizedBox(width: 4),
+                          TextButton(
+                            onPressed: () {
                               _controller.clear();
                               setState(() => _showAddForm = false);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MindPalColors.ink900,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            elevation: 0,
-                          ),
-                          child: const Text('Add'),
-                        ),
-                        const SizedBox(width: 4),
-                        TextButton(
-                          onPressed: () {
-                            _controller.clear();
-                            setState(() => _showAddForm = false);
-                          },
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(color: MindPalColors.ink700),
-                          ),
-                        ),
-                      ],
-                    )
-                  : GestureDetector(
-                      onTap: () => setState(() => _showAddForm = true),
-                      child: Row(
-                        children: [
-                          Text(
-                            '+',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: MindPalColors.ink700,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Add habit',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: MindPalColors.ink700,
+                            },
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(color: MindPalColors.ink700),
                             ),
                           ),
                         ],
+                      )
+                      : GestureDetector(
+                        onTap: () => setState(() => _showAddForm = true),
+                        child: Row(
+                          children: [
+                            Text(
+                              '+',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: MindPalColors.ink700,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Add habit',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: MindPalColors.ink700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
             ),
           ],
         ],
@@ -768,7 +817,8 @@ class _HabitRowState extends State<_HabitRow> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _hasDetails ? () => setState(() => _isExpanded = !_isExpanded) : null,
+      onTap:
+          _hasDetails ? () => setState(() => _isExpanded = !_isExpanded) : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -777,9 +827,10 @@ class _HabitRowState extends State<_HabitRow> {
           color: MindPalColors.sand50.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: _isExpanded
-                ? MindPalColors.ink900.withValues(alpha: 0.3)
-                : MindPalColors.clay200.withValues(alpha: 0.7),
+            color:
+                _isExpanded
+                    ? MindPalColors.ink900.withValues(alpha: 0.3)
+                    : MindPalColors.clay200.withValues(alpha: 0.7),
           ),
         ),
         child: Column(
@@ -797,7 +848,8 @@ class _HabitRowState extends State<_HabitRow> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     side: BorderSide(color: MindPalColors.clay300, width: 1.5),
-                    onChanged: (value) => widget.onToggle(widget.item, value ?? false),
+                    onChanged:
+                        (value) => widget.onToggle(widget.item, value ?? false),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -808,7 +860,10 @@ class _HabitRowState extends State<_HabitRow> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: MindPalColors.ink900,
-                      decoration: widget.item.completed ? TextDecoration.lineThrough : null,
+                      decoration:
+                          widget.item.completed
+                              ? TextDecoration.lineThrough
+                              : null,
                     ),
                   ),
                 ),
@@ -821,7 +876,10 @@ class _HabitRowState extends State<_HabitRow> {
                 TextButton(
                   onPressed: () => widget.onDelete(widget.item.id),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -847,26 +905,25 @@ class _HabitRowState extends State<_HabitRow> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (widget.item.category != null && widget.item.category!.isNotEmpty) ...[
+                    if (widget.item.category != null &&
+                        widget.item.category!.isNotEmpty) ...[
                       _DetailRow(
                         label: 'Category',
                         value: widget.item.category!,
                       ),
                     ],
-                    if (widget.item.cueText != null && widget.item.cueText!.isNotEmpty) ...[
-                      if (widget.item.category != null) const SizedBox(height: 8),
-                      _DetailRow(
-                        label: 'Cue',
-                        value: widget.item.cueText!,
-                      ),
-                    ],
-                    if (widget.item.reasonText != null && widget.item.reasonText!.isNotEmpty) ...[
-                      if (widget.item.category != null || widget.item.cueText != null)
+                    if (widget.item.cueText != null &&
+                        widget.item.cueText!.isNotEmpty) ...[
+                      if (widget.item.category != null)
                         const SizedBox(height: 8),
-                      _DetailRow(
-                        label: 'Why',
-                        value: widget.item.reasonText!,
-                      ),
+                      _DetailRow(label: 'Cue', value: widget.item.cueText!),
+                    ],
+                    if (widget.item.reasonText != null &&
+                        widget.item.reasonText!.isNotEmpty) ...[
+                      if (widget.item.category != null ||
+                          widget.item.cueText != null)
+                        const SizedBox(height: 8),
+                      _DetailRow(label: 'Why', value: widget.item.reasonText!),
                     ],
                   ],
                 ),
@@ -935,9 +992,7 @@ class _DirectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: MindPalColors.clay200.withValues(alpha: 0.8),
-        ),
+        border: Border.all(color: MindPalColors.clay200.withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -959,10 +1014,7 @@ class _DirectionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          CategorySelector(
-            selected: selectedCategory,
-            onSelect: onSelect,
-          ),
+          CategorySelector(selected: selectedCategory, onSelect: onSelect),
         ],
       ),
     );

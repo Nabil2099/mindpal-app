@@ -92,6 +92,13 @@ class RecommendationsRepository {
     return RecommendationItem.fromJson(response.data ?? {});
   }
 
+  Future<void> adoptHabit(String itemId) async {
+    await _dio.post<void>(
+      '/recommendations/items/$itemId/habit',
+      data: <String, Object?>{'user_id': kUserId},
+    );
+  }
+
   Future<void> skipItem(String itemId) async {
     await _dio.post<void>(
       '/recommendations/items/$itemId/interactions',
