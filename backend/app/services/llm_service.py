@@ -164,6 +164,39 @@ class LLMService:
         assert last_err is not None
         raise last_err
 
+    async def stream_thinking_tokens(
+        self,
+        user_message: str,
+        context_summary: str = "",
+        *,
+        max_tokens: int = 150,
+    ) -> AsyncGenerator[str, None]:
+        """Stream brief reasoning/thinking steps before generating the main response.
+
+        Produces a concise chain-of-thought that helps the user understand
+        how MindPal is processing their message.
+        """
+        thinking_prompt = f"""You are MindPal's internal reasoning system. Given the user's message, produce a brief thinking process (2-4 short bullet points) showing how you're analyzing their input.
+
+Rules:
+- Be concise: each point should be 5-15 words
+- Use "•" for bullets
+- Focus on: emotional tone, key themes, what context might help
+- Do NOT provide the actual response - just show your reasoning
+- Do NOT use markdown headers or formatting beyond bullets
+
+User message: "{user_message}"
+{f'Context: {context_summary}' if context_summary else ''}
+
+Thinking:"""
+
+        async for token in self.stream_chat_tokens(
+            thinking_prompt,
+            temperature=0.3,
+            max_tokens=max_tokens,
+        ):
+            yield token
+
     async def generate_structured_json(
         self,
         system_prompt: str,

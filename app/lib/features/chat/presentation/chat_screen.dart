@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:mindpal_app/features/chat/domain/models.dart';
 import 'package:mindpal_app/features/chat/providers/chat_providers.dart';
 import 'package:mindpal_app/features/chat/presentation/widgets/chat_input.dart';
 import 'package:mindpal_app/features/chat/presentation/widgets/message_bubble.dart';
@@ -17,19 +16,13 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen>
-    with SingleTickerProviderStateMixin {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   late final TextEditingController _controller;
-  late final AnimationController _streamingController;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    _streamingController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    )..repeat(reverse: true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(chatProvider.notifier).ensureConversation();
     });
@@ -38,7 +31,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   @override
   void dispose() {
     _controller.dispose();
-    _streamingController.dispose();
     super.dispose();
   }
 
@@ -53,20 +45,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   Widget build(BuildContext context) {
     final state = ref.watch(chatProvider);
     final messages = state.currentMessages;
-    final streamingMessage = Message(
-      id: 'streaming',
-      conversationId: state.currentConversationId ?? '',
-      role: 'assistant',
-      text:
-          _streamingController.value > 0.5
-              ? 'MindPal is reflecting...|'
-              : 'MindPal is reflecting...',
-      createdAt: DateTime.now(),
-    );
-    final display = <Message>[
-      if (state.showStreaming) streamingMessage,
-      ...messages.reversed,
-    ];
 
     return Scaffold(
       drawerEnableOpenDragGesture: true,
@@ -114,12 +92,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   reverse: true,
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                   itemBuilder: (context, index) {
-                    final message = display[index];
-                    return MessageBubble(message: message);
+                    final reversedMessages = messages.reversed.toList();
+                    final message = reversedMessages[index];
+                    final isCurrentlyStreaming = 
+                        message.id == state.streamingMessageId && state.showStreaming;
+                    final isCurrentlyThinking = 
+                        message.id == state.streamingMessageId && state.isThinking;
+                    
+                    return MessageBubble(
+                      message: message,
+                      isStreaming: isCurrentlyStreaming,
+                      isThinking: isCurrentlyThinking,
+                    );
                   },
                   separatorBuilder:
                       (context, index) => const SizedBox(height: 10),
-                  itemCount: display.length,
+                  itemCount: messages.length,
                 ),
               },
             ),

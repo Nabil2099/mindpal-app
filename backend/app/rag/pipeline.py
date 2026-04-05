@@ -153,6 +153,23 @@ class RAGPipeline:
             "user_message_id": context.user_message_id,
         }
 
+        # Phase 1: Stream thinking/reasoning tokens
+        thinking_parts: list[str] = []
+        try:
+            yield {"type": "thinking_start"}
+            async for token in self.llm.stream_thinking_tokens(
+                user_message=user_text,
+                context_summary=self._build_thinking_context_summary(context),
+                max_tokens=150,
+            ):
+                thinking_parts.append(token)
+                yield {"type": "thinking_token", "token": token}
+            yield {"type": "thinking_end", "thinking": "".join(thinking_parts)}
+        except Exception as thinking_exc:  # noqa: BLE001
+            logger.debug("Thinking generation failed, continuing without: %s", thinking_exc)
+            yield {"type": "thinking_end", "thinking": ""}
+
+        # Phase 2: Stream response tokens
         streamed_parts: list[str] = []
         stream_error: Exception | None = None
 
@@ -257,6 +274,22 @@ class RAGPipeline:
             True,
         )
 
+    @staticmethod
+    def _build_thinking_context_summary(context: PreparedGenerationContext) -> str:
+        """Build a brief context summary for the thinking phase."""
+        parts = []
+        if context.emotions:
+            emotion_labels = [e.get("label", "") for e in context.emotions[:3] if e.get("label")]
+            if emotion_labels:
+                parts.append(f"Detected emotions: {', '.join(emotion_labels)}")
+        if context.habits:
+            habit_names = [h.get("name", "") for h in context.habits[:3] if h.get("name")]
+            if habit_names:
+                parts.append(f"Related habits: {', '.join(habit_names)}")
+        if context.response_plan:
+            parts.append(f"Response focus: {context.response_plan.focus}")
+        return "; ".join(parts) if parts else ""
+
     async def _prepare_generation_context(
         self,
         *,
@@ -270,12 +303,8 @@ class RAGPipeline:
         db.add(user_message)
         await db.flush()
 
-<<<<<<< HEAD
         now = user_message.timestamp or datetime.now(UTC)
-=======
-        now = user_message.timestamp or datetime.utcnow()
         small_talk = self._is_small_talk_message(user_text)
->>>>>>> upstream/main
         await self.vector.upsert_message_embedding(
             vector_id=f"msg-{user_message.id}",
             content=user_text,

@@ -16,6 +16,8 @@ class ChatState {
     required this.isInitializing,
     required this.isSending,
     required this.showStreaming,
+    required this.isThinking,
+    required this.streamingMessageId,
     this.error,
   });
 
@@ -25,6 +27,8 @@ class ChatState {
     isInitializing: false,
     isSending: false,
     showStreaming: false,
+    isThinking: false,
+    streamingMessageId: null,
   );
 
   final String? currentConversationId;
@@ -32,6 +36,8 @@ class ChatState {
   final bool isInitializing;
   final bool isSending;
   final bool showStreaming;
+  final bool isThinking;
+  final String? streamingMessageId;
   final String? error;
 
   List<Message> get currentMessages {
@@ -48,6 +54,8 @@ class ChatState {
     bool? isInitializing,
     bool? isSending,
     bool? showStreaming,
+    bool? isThinking,
+    String? streamingMessageId,
     String? error,
   }) {
     return ChatState(
@@ -57,6 +65,8 @@ class ChatState {
       isInitializing: isInitializing ?? this.isInitializing,
       isSending: isSending ?? this.isSending,
       showStreaming: showStreaming ?? this.showStreaming,
+      isThinking: isThinking ?? this.isThinking,
+      streamingMessageId: streamingMessageId,
       error: error,
     );
   }
@@ -245,7 +255,17 @@ class ChatNotifier extends _$ChatNotifier {
       createdAt: DateTime.now(),
     );
 
-    final list = <Message>[...state.currentMessages, userMessage];
+    // Create placeholder assistant message for streaming
+    final assistantMessageId = '${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(999)}';
+    final assistantPlaceholder = Message(
+      id: assistantMessageId,
+      conversationId: conversationId,
+      role: 'assistant',
+      text: '',
+      createdAt: DateTime.now(),
+    );
+
+    final list = <Message>[...state.currentMessages, userMessage, assistantPlaceholder];
     state = state.copyWith(
       messages: <String, List<Message>>{
         ...state.messages,
@@ -253,46 +273,109 @@ class ChatNotifier extends _$ChatNotifier {
       },
       isSending: true,
       showStreaming: true,
+      isThinking: true,
+      streamingMessageId: assistantMessageId,
       error: null,
     );
 
-    try {
-      final response = await repo.sendMessage(
-        conversationId: conversationId,
-        message: text.trim(),
-      );
-      // Check if provider is still mounted after async operation
-      if (!ref.mounted) return;
+    final completer = Completer<void>();
 
-      final assistantMessage = Message(
-        id: '${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(999)}',
-        conversationId: conversationId,
-        role: 'assistant',
-        text: response,
-        createdAt: DateTime.now(),
-      );
-      state = state.copyWith(
-        messages: <String, List<Message>>{
-          ...state.messages,
-          conversationId: <Message>[...list, assistantMessage],
-        },
-        isSending: false,
-        showStreaming: false,
-      );
-      ref.invalidate(conversationsProvider);
-      await ref
-          .read(chatLocalCacheProvider)
-          .writeMessages(
-            conversationId,
-            state.messages[conversationId] ?? const <Message>[],
-          );
-    } catch (e) {
-      if (!ref.mounted) return;
-      state = state.copyWith(
-        isSending: false,
-        showStreaming: false,
-        error: 'Unable to send message. Please try again.',
-      );
-    }
+    repo.streamMessage(
+      conversationId: conversationId,
+      message: text.trim(),
+      onThinkingToken: (token) {
+        if (!ref.mounted) return;
+        _updateStreamingMessage(conversationId, assistantMessageId, thinkingToken: token);
+      },
+      onResponseToken: (token) {
+        if (!ref.mounted) return;
+        // When first response token arrives, stop thinking phase
+        if (state.isThinking) {
+          state = state.copyWith(isThinking: false);
+        }
+        _updateStreamingMessage(conversationId, assistantMessageId, responseToken: token);
+      },
+      onComplete: (fullResponse, thinking) async {
+        if (!ref.mounted) {
+          completer.complete();
+          return;
+        }
+        
+        // Update final message
+        final currentList = state.messages[conversationId] ?? <Message>[];
+        final updatedList = currentList.map((m) {
+          if (m.id == assistantMessageId) {
+            return m.copyWith(
+              text: fullResponse.isNotEmpty ? fullResponse : m.text,
+              thinking: thinking ?? m.thinking,
+            );
+          }
+          return m;
+        }).toList();
+
+        state = state.copyWith(
+          messages: <String, List<Message>>{
+            ...state.messages,
+            conversationId: updatedList,
+          },
+          isSending: false,
+          showStreaming: false,
+          isThinking: false,
+          streamingMessageId: null,
+        );
+
+        ref.invalidate(conversationsProvider);
+        await ref.read(chatLocalCacheProvider).writeMessages(
+          conversationId,
+          updatedList,
+        );
+        completer.complete();
+      },
+      onError: (error) {
+        if (!ref.mounted) {
+          completer.complete();
+          return;
+        }
+        state = state.copyWith(
+          isSending: false,
+          showStreaming: false,
+          isThinking: false,
+          streamingMessageId: null,
+          error: 'Unable to send message. Please try again.',
+        );
+        completer.complete();
+      },
+    );
+
+    await completer.future;
+  }
+
+  void _updateStreamingMessage(
+    String conversationId,
+    String messageId, {
+    String? thinkingToken,
+    String? responseToken,
+  }) {
+    final currentList = state.messages[conversationId] ?? <Message>[];
+    final updatedList = currentList.map((m) {
+      if (m.id == messageId) {
+        return m.copyWith(
+          thinking: thinkingToken != null 
+              ? '${m.thinking ?? ''}$thinkingToken' 
+              : m.thinking,
+          text: responseToken != null 
+              ? '${m.text}$responseToken' 
+              : m.text,
+        );
+      }
+      return m;
+    }).toList();
+
+    state = state.copyWith(
+      messages: <String, List<Message>>{
+        ...state.messages,
+        conversationId: updatedList,
+      },
+    );
   }
 }

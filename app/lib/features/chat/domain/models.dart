@@ -23,6 +23,7 @@ class Message {
     required this.role,
     required this.text,
     required this.createdAt,
+    this.thinking,
   });
 
   final String id;
@@ -30,8 +31,27 @@ class Message {
   final String role;
   final String text;
   final DateTime createdAt;
+  final String? thinking;
 
   bool get isUser => role.toLowerCase() == 'user';
+
+  Message copyWith({
+    String? id,
+    String? conversationId,
+    String? role,
+    String? text,
+    DateTime? createdAt,
+    String? thinking,
+  }) {
+    return Message(
+      id: id ?? this.id,
+      conversationId: conversationId ?? this.conversationId,
+      role: role ?? this.role,
+      text: text ?? this.text,
+      createdAt: createdAt ?? this.createdAt,
+      thinking: thinking ?? this.thinking,
+    );
+  }
 
   factory Message.fromJson(
     Map<String, dynamic> json, {
@@ -49,6 +69,7 @@ class Message {
       createdAt:
           DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
+      thinking: json['thinking']?.toString(),
     );
   }
 }
