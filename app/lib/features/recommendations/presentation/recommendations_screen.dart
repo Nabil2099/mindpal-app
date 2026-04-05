@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -6,6 +7,7 @@ import 'package:mindpal_app/features/recommendations/domain/models.dart';
 import 'package:mindpal_app/features/recommendations/providers/recommendations_providers.dart';
 import 'package:mindpal_app/features/recommendations/presentation/widgets/category_selector.dart';
 import 'package:mindpal_app/shared/widgets/app_drawer.dart';
+import 'package:mindpal_app/shared/widgets/auto_scroll_text.dart';
 import 'package:mindpal_app/shared/widgets/shimmer_loader.dart';
 import 'package:mindpal_app/shared/widgets/state_panels.dart';
 import 'package:mindpal_app/theme.dart';
@@ -141,6 +143,7 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
                       onToggle: notifier.toggleHabit,
                       onAdd: notifier.addHabit,
                       onDelete: notifier.deleteHabit,
+                      onReorder: notifier.reorderHabits,
                     ),
                     const SizedBox(height: 20),
                     // Category Selector
@@ -196,6 +199,13 @@ class _RecommendationCarousel extends StatelessWidget {
             border: Border.all(
               color: MindPalColors.clay200.withValues(alpha: 0.8),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: MindPalColors.ink900.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -333,239 +343,316 @@ class _RecommendationPage extends StatefulWidget {
 class _RecommendationPageState extends State<_RecommendationPage> {
   bool _isExpanded = false;
 
+  void _handleComplete() async {
+    HapticFeedback.mediumImpact();
+    final isAdopt = widget.item.kind == 'adopt_habit';
+
+    if (isAdopt) {
+      await widget.onAdopt(widget.item.id);
+    } else {
+      await widget.onComplete(widget.item.id);
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Text(
+                isAdopt ? 'Habit adopted!' : 'Completed!',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          backgroundColor: MindPalColors.sage300,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() => _isExpanded = !_isExpanded),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(
-            bottom: Radius.circular(24),
-          ),
-          border: Border.all(
-            color:
-                _isExpanded
-                    ? MindPalColors.ink900.withValues(alpha: 0.3)
-                    : MindPalColors.clay200.withValues(alpha: 0.8),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row with title and expand icon - tappable
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        widget.item.title,
-                        style: GoogleFonts.newsreader(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: MindPalColors.ink900,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Duration and kind tags
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: MindPalColors.sand100,
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            child: Text(
-                              widget.item.duration.toUpperCase(),
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.8,
-                                color: MindPalColors.ink700,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: MindPalColors.clay100,
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            child: Text(
-                              widget.item.kind
-                                  .replaceAll('_', ' ')
-                                  .toUpperCase(),
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.8,
-                                color: MindPalColors.ink700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  _isExpanded ? Icons.expand_less : Icons.expand_more,
-                  color: MindPalColors.ink700,
-                  size: 24,
-                ),
-              ],
+    return Align(
+      alignment: Alignment.topCenter,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => setState(() => _isExpanded = !_isExpanded),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(24),
             ),
-            // Expanded content
-            if (_isExpanded) ...[
-              const SizedBox(height: 16),
-              // Context label
-              Text(
-                'WHY THIS?',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                  color: MindPalColors.ink700.withValues(alpha: 0.6),
-                ),
-              ),
-              const SizedBox(height: 6),
-              // Rationale
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.item.rationale,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          color: MindPalColors.ink700,
-                          height: 1.6,
-                        ),
-                      ),
-                      if (widget.item.followUp != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          widget.item.followUp!,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontStyle: FontStyle.italic,
-                            color: MindPalColors.ink700.withValues(alpha: 0.8),
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Action buttons
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed:
-                      () =>
-                          widget.item.kind == 'adopt_habit'
-                              ? widget.onAdopt(widget.item.id)
-                              : widget.onComplete(widget.item.id),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: MindPalColors.ink900,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    widget.item.kind == 'adopt_habit'
-                        ? 'Adopt habit'
-                        : 'Mark complete',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
+            border: Border.all(
+              color:
+                  _isExpanded
+                      ? MindPalColors.ink900.withValues(alpha: 0.3)
+                      : MindPalColors.clay200.withValues(alpha: 0.8),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row with title and expand icon - tappable
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => widget.onSkip(widget.item.id),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: MindPalColors.ink800,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: MindPalColors.clay300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        SizedBox(
+                          height: 60,
+                          child: AutoScrollText(
+                            text: widget.item.title,
+                            scrollDirection: Axis.vertical,
+                            style: GoogleFonts.newsreader(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: MindPalColors.ink900,
+                              height: 1.2,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Skip',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(height: 8),
+                        // Duration and kind tags
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: MindPalColors.sand100,
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              child: Text(
+                                widget.item.duration.toUpperCase(),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.8,
+                                  color: MindPalColors.ink700,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: MindPalColors.clay100,
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              child: Text(
+                                widget.item.kind
+                                    .replaceAll('_', ' ')
+                                    .toUpperCase(),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.8,
+                                  color: MindPalColors.ink700,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: widget.onNext,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: MindPalColors.ink800,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: MindPalColors.clay300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                      ),
-                      child: Text(
-                        'Next',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                  const SizedBox(width: 8),
+                  // 48x48 touch target for expand icon
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(
+                      _isExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: MindPalColors.ink700,
+                      size: 24,
                     ),
                   ),
                 ],
               ),
-            ] else ...[
-              // Collapsed hint
-              const Spacer(),
-              Center(
-                child: Text(
-                  'Tap to see details',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: MindPalColors.ink700.withValues(alpha: 0.5),
-                  ),
+              // Expanded content with AnimatedSize for smooth transitioning height
+              Flexible(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.fastOutSlowIn,
+                  alignment: Alignment.topCenter,
+                  child:
+                      _isExpanded
+                          ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 16),
+                              // Context label
+                              Text(
+                                'WHY THIS?',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.5,
+                                  color: MindPalColors.ink700.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              // Rationale
+                              Flexible(
+                                child: AutoScrollText(
+                                  scrollDirection: Axis.vertical,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.item.rationale,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14,
+                                          color: MindPalColors.ink700,
+                                          height: 1.6,
+                                        ),
+                                      ),
+                                      if (widget.item.followUp != null) ...[
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          widget.item.followUp!,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 13,
+                                            fontStyle: FontStyle.italic,
+                                            color: MindPalColors.ink700
+                                                .withValues(alpha: 0.8),
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // Action buttons
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: ElevatedButton(
+                                  onPressed: _handleComplete,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: MindPalColors.ink900,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(100),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: Text(
+                                    widget.item.kind == 'adopt_habit'
+                                        ? 'Adopt habit'
+                                        : 'Mark complete',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: OutlinedButton(
+                                        onPressed:
+                                            () => widget.onSkip(widget.item.id),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: MindPalColors.ink800,
+                                          side: BorderSide(
+                                            color: MindPalColors.clay300,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              100,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Skip',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: OutlinedButton(
+                                        onPressed: widget.onNext,
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: MindPalColors.ink800,
+                                          side: BorderSide(
+                                            color: MindPalColors.clay300,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              100,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Next',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          )
+                          : Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.only(top: 24, bottom: 8),
+                            child: Center(
+                              child: Text(
+                                'Tap to see details',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  color: MindPalColors.ink700.withValues(
+                                    alpha: 0.65,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -580,6 +667,7 @@ class _HabitsSection extends StatefulWidget {
     required this.onToggle,
     required this.onAdd,
     required this.onDelete,
+    required this.onReorder,
   });
 
   final List<HabitChecklistItem> items;
@@ -588,6 +676,7 @@ class _HabitsSection extends StatefulWidget {
   final Future<void> Function(HabitChecklistItem item, bool checked) onToggle;
   final Future<void> Function(String name) onAdd;
   final Future<void> Function(String id) onDelete;
+  final void Function(int oldIndex, int newIndex) onReorder;
 
   @override
   State<_HabitsSection> createState() => _HabitsSectionState();
@@ -612,6 +701,13 @@ class _HabitsSectionState extends State<_HabitsSection> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: MindPalColors.clay200.withValues(alpha: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: MindPalColors.ink900.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -645,15 +741,22 @@ class _HabitsSectionState extends State<_HabitsSection> {
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: widget.onToggleExpanded,
-                  child: Text(
-                    widget.isExpanded ? 'HIDE' : 'SHOW',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                      color: MindPalColors.ink700,
+                // 48x48 touch target for show/hide button
+                SizedBox(
+                  height: 48,
+                  child: TextButton(
+                    onPressed: widget.onToggleExpanded,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(64, 48),
+                    ),
+                    child: Text(
+                      widget.isExpanded ? 'HIDE' : 'SHOW',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                        color: MindPalColors.ink700,
+                      ),
                     ),
                   ),
                 ),
@@ -665,22 +768,90 @@ class _HabitsSectionState extends State<_HabitsSection> {
             const Divider(height: 1, color: MindPalColors.clay100),
             if (widget.items.isEmpty)
               Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text(
-                  'Add a habit below or adopt one from your recommendations.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: MindPalColors.ink700.withValues(alpha: 0.7),
-                  ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 32,
+                ),
+                child: Column(
+                  children: [
+                    // Friendly empty state illustration (plant icon)
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: MindPalColors.sage100.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.eco_outlined,
+                        size: 32,
+                        color: MindPalColors.sage300,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Start growing your habits',
+                      style: GoogleFonts.newsreader(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: MindPalColors.ink900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Add a habit below or adopt one from your recommendations.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: MindPalColors.ink700.withValues(alpha: 0.7),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               )
             else
-              ...widget.items.map(
-                (item) => _HabitRow(
-                  item: item,
-                  onToggle: widget.onToggle,
-                  onDelete: widget.onDelete,
-                ),
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: widget.items.length,
+                onReorder: widget.onReorder,
+                proxyDecorator: (child, index, animation) {
+                  return AnimatedBuilder(
+                    animation: animation,
+                    builder: (context, child) {
+                      final scale =
+                          Tween<double>(begin: 1.0, end: 1.02)
+                              .animate(
+                                CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeInOut,
+                                ),
+                              )
+                              .value;
+                      return Transform.scale(
+                        scale: scale,
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(16),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: child,
+                  );
+                },
+                itemBuilder: (context, index) {
+                  final item = widget.items[index];
+                  return _HabitRow(
+                    key: ValueKey(item.id),
+                    item: item,
+                    index: index,
+                    onToggle: widget.onToggle,
+                    onDelete: widget.onDelete,
+                  );
+                },
               ),
             // Add habit form or button
             Padding(
@@ -793,12 +964,15 @@ class _HabitsSectionState extends State<_HabitsSection> {
 
 class _HabitRow extends StatefulWidget {
   const _HabitRow({
+    super.key,
     required this.item,
+    required this.index,
     required this.onToggle,
     required this.onDelete,
   });
 
   final HabitChecklistItem item;
+  final int index;
   final Future<void> Function(HabitChecklistItem item, bool checked) onToggle;
   final Future<void> Function(String id) onDelete;
 
@@ -806,13 +980,55 @@ class _HabitRow extends StatefulWidget {
   State<_HabitRow> createState() => _HabitRowState();
 }
 
-class _HabitRowState extends State<_HabitRow> {
+class _HabitRowState extends State<_HabitRow>
+    with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
+  late AnimationController _strikeController;
+  late Animation<double> _strikeAnimation;
 
   bool get _hasDetails =>
       (widget.item.category != null && widget.item.category!.isNotEmpty) ||
       (widget.item.cueText != null && widget.item.cueText!.isNotEmpty) ||
       (widget.item.reasonText != null && widget.item.reasonText!.isNotEmpty);
+
+  @override
+  void initState() {
+    super.initState();
+    _strikeController = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+    );
+    _strikeAnimation = CurvedAnimation(
+      parent: _strikeController,
+      curve: Curves.easeOut,
+    );
+    if (widget.item.completed) {
+      _strikeController.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _HabitRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.item.completed != oldWidget.item.completed) {
+      if (widget.item.completed) {
+        _strikeController.forward();
+      } else {
+        _strikeController.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _strikeController.dispose();
+    super.dispose();
+  }
+
+  void _handleToggle(bool? value) {
+    HapticFeedback.lightImpact();
+    widget.onToggle(widget.item, value ?? false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -822,7 +1038,7 @@ class _HabitRowState extends State<_HabitRow> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.only(left: 8, right: 16, top: 14, bottom: 14),
         decoration: BoxDecoration(
           color: MindPalColors.sand50.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(16),
@@ -832,63 +1048,128 @@ class _HabitRowState extends State<_HabitRow> {
                     ? MindPalColors.ink900.withValues(alpha: 0.3)
                     : MindPalColors.clay200.withValues(alpha: 0.7),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: MindPalColors.ink900.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: Checkbox(
-                    value: widget.item.completed,
-                    activeColor: MindPalColors.ink900,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
+                // Drag handle for reordering
+                ReorderableDragStartListener(
+                  index: widget.index,
+                  child: SizedBox(
+                    width: 32,
+                    height: 48,
+                    child: Icon(
+                      Icons.drag_indicator,
+                      color: MindPalColors.clay300,
+                      size: 20,
                     ),
-                    side: BorderSide(color: MindPalColors.clay300, width: 1.5),
-                    onChanged:
-                        (value) => widget.onToggle(widget.item, value ?? false),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    widget.item.name,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: MindPalColors.ink900,
-                      decoration:
-                          widget.item.completed
-                              ? TextDecoration.lineThrough
-                              : null,
+                // 48x48 touch target for checkbox
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: Checkbox(
+                        value: widget.item.completed,
+                        activeColor: MindPalColors.ink900,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        side: BorderSide(
+                          color: MindPalColors.clay300,
+                          width: 1.5,
+                        ),
+                        onChanged: _handleToggle,
+                      ),
                     ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: AnimatedBuilder(
+                    animation: _strikeAnimation,
+                    builder: (context, child) {
+                      return Stack(
+                        children: [
+                          AutoScrollText(
+                            text: widget.item.name,
+                            scrollDirection: Axis.horizontal,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color.lerp(
+                                MindPalColors.ink900,
+                                MindPalColors.ink700,
+                                _strikeAnimation.value,
+                              ),
+                            ),
+                          ),
+                          // Animated strikethrough line
+                          if (_strikeAnimation.value > 0)
+                            Positioned.fill(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return Container(
+                                      width:
+                                          constraints.maxWidth *
+                                          _strikeAnimation.value,
+                                      height: 1.5,
+                                      color: MindPalColors.ink700.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 if (_hasDetails)
-                  Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: MindPalColors.ink700,
-                    size: 20,
-                  ),
-                TextButton(
-                  onPressed: () => widget.onDelete(widget.item.id),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    'Remove',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                  // 48x48 touch target for expand icon
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(
+                      _isExpanded ? Icons.expand_less : Icons.expand_more,
                       color: MindPalColors.ink700,
+                      size: 20,
+                    ),
+                  ),
+                // 48x48 touch target for remove button
+                SizedBox(
+                  width: 72,
+                  height: 48,
+                  child: TextButton(
+                    onPressed: () => widget.onDelete(widget.item.id),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(72, 48),
+                    ),
+                    child: Text(
+                      'Remove',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: MindPalColors.ink700,
+                      ),
                     ),
                   ),
                 ),

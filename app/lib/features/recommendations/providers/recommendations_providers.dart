@@ -157,6 +157,17 @@ class RecommendationsNotifier extends _$RecommendationsNotifier {
     );
   }
 
+  void reorderHabits(int oldIndex, int newIndex) {
+    // Adjust index if moving down
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    final items = List<HabitChecklistItem>.from(state.checklist);
+    final item = items.removeAt(oldIndex);
+    items.insert(newIndex, item);
+    state = state.copyWith(checklist: items);
+  }
+
   Future<void> completeItem(String itemId) async {
     final repo = ref.read(recommendationsRepositoryProvider);
     await repo.completeItem(itemId);
