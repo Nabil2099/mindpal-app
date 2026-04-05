@@ -28,7 +28,9 @@ class _AutoScrollTextState extends State<AutoScrollText> {
     super.initState();
     _scrollController = ScrollController();
     if (widget.scrollDirection == Axis.vertical) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _checkAndStartScrolling());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkAndStartScrolling(),
+      );
     }
   }
 
@@ -36,7 +38,9 @@ class _AutoScrollTextState extends State<AutoScrollText> {
   void didUpdateWidget(covariant AutoScrollText oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.scrollDirection == Axis.vertical) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _checkAndStartScrolling());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkAndStartScrolling(),
+      );
     }
   }
 
@@ -51,7 +55,8 @@ class _AutoScrollTextState extends State<AutoScrollText> {
 
   void _checkAndStartScrolling() async {
     if (!mounted) return;
-    if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > 0) {
+    if (_scrollController.hasClients &&
+        _scrollController.position.maxScrollExtent > 0) {
       if (!_isScrolling) {
         _isScrolling = true;
         _scroll();
@@ -65,16 +70,26 @@ class _AutoScrollTextState extends State<AutoScrollText> {
     while (_isScrolling && mounted) {
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted || !_isScrolling || !_scrollController.hasClients) break;
-      
+
       final maxScroll = _scrollController.position.maxScrollExtent;
       if (maxScroll <= 0) break;
-      
-      final duration = Duration(milliseconds: (maxScroll * 35).toInt().clamp(2000, 15000));
-      
+
+      final duration = Duration(
+        milliseconds: (maxScroll * 35).toInt().clamp(2000, 15000),
+      );
+
       if (_scrollController.offset <= 0.0) {
-        await _scrollController.animateTo(maxScroll, duration: duration, curve: Curves.easeInOut);
+        await _scrollController.animateTo(
+          maxScroll,
+          duration: duration,
+          curve: Curves.easeInOut,
+        );
       } else {
-        await _scrollController.animateTo(0.0, duration: duration, curve: Curves.easeInOut);
+        await _scrollController.animateTo(
+          0.0,
+          duration: duration,
+          curve: Curves.easeInOut,
+        );
       }
     }
   }
@@ -88,10 +103,7 @@ class _AutoScrollTextState extends State<AutoScrollText> {
           controller: _scrollController,
           scrollDirection: Axis.vertical,
           physics: const NeverScrollableScrollPhysics(),
-          child: widget.child ?? Text(
-            widget.text ?? '',
-            style: widget.style,
-          ),
+          child: widget.child ?? Text(widget.text ?? '', style: widget.style),
         ),
       );
     } else {
