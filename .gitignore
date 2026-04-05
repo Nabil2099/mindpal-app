@@ -48,6 +48,8 @@ Thumbs.db
 
 # Local runtime/generated artifacts
 backend/chroma_data/
+backend/.env
+backend/*.db
 *.sqlite3
 *.db
 mindpal_graph.json
@@ -55,6 +57,8 @@ mindpal_graph.json
 tmp/
 temp/
 frontend/dist/
+frontend/.env
+frontend/node_modules/
 
 # OS
 .DS_Store
