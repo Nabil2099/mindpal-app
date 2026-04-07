@@ -5,10 +5,51 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mindpal_app/features/insights/domain/models.dart';
 import 'package:mindpal_app/theme.dart';
 
-class HabitPieChart extends StatelessWidget {
+class HabitPieChart extends StatefulWidget {
   const HabitPieChart({required this.habits, super.key});
 
   final List<HabitStat> habits;
+
+  @override
+  State<HabitPieChart> createState() => _HabitPieChartState();
+}
+
+class _HabitPieChartState extends State<HabitPieChart> with SingleTickerProviderStateMixin {
+  bool _isExpanded = false;
+  late AnimationController _animationController;
+  late Animation<double> _expandAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpand() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  List<HabitStat> get habits => widget.habits;
 
   // Earthy color palette matching the mockup
   static const List<Color> _palette = [
@@ -54,40 +95,60 @@ class HabitPieChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Habit Distribution Card
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? MindPalColors.darkSurface : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: cardBorder,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Habit Distribution',
-                style: GoogleFonts.fraunces(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? MindPalColors.darkTextPrimary : MindPalColors.ink900,
+        // Habit Distribution Card - Expandable
+        GestureDetector(
+          onTap: _toggleExpand,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? MindPalColors.darkSurface : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: cardBorder,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with expand indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Habit Distribution',
+                            style: GoogleFonts.fraunces(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? MindPalColors.darkTextPrimary : MindPalColors.ink900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Your practice breakdown this period',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: isDark ? MindPalColors.darkTextSecondary : MindPalColors.ink700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    RotationTransition(
+                      turns: Tween(begin: 0.0, end: 0.5).animate(_expandAnimation),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: isDark ? MindPalColors.darkTextSecondary : MindPalColors.ink700,
+                        size: 24,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Your practice breakdown this period',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  color: isDark ? MindPalColors.darkTextSecondary : MindPalColors.ink700,
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Chart and legend side by side
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Donut Chart - fixed 160x160
-                  SizedBox(
+                const SizedBox(height: 20),
+                // Chart centered
+                Center(
+                  child: SizedBox(
                     width: 160,
                     height: 160,
                     child: Stack(
@@ -96,7 +157,7 @@ class HabitPieChart extends StatelessWidget {
                         PieChart(
                           PieChartData(
                             sectionsSpace: 2,
-                            centerSpaceRadius: 160 * 0.29, // 0.58 hole ratio
+                            centerSpaceRadius: 160 * 0.29,
                             sections: habits.asMap().entries.map((entry) {
                               final i = entry.key;
                               final item = entry.value;
@@ -111,7 +172,6 @@ class HabitPieChart extends StatelessWidget {
                             }).toList(growable: false),
                           ),
                         ),
-                        // Center text overlay
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -137,18 +197,29 @@ class HabitPieChart extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  // Legend - takes remaining space
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _buildLegendItems(habits, total, isDark),
-                    ),
+                ),
+                // Animated legend section
+                SizeTransition(
+                  sizeFactor: _expandAnimation,
+                  axisAlignment: -1.0,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      // Divider
+                      Container(
+                        height: 1,
+                        color: isDark
+                            ? MindPalColors.darkBorder.withValues(alpha: 0.5)
+                            : MindPalColors.clay200.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      // Legend items
+                      _buildLegendGrid(context, habits, total, isDark),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -191,24 +262,27 @@ class HabitPieChart extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildLegendItems(List<HabitStat> habits, int total, bool isDark) {
-    final items = <Widget>[];
-    for (int i = 0; i < habits.length; i++) {
-      final item = habits[i];
+  Widget _buildLegendGrid(BuildContext context, List<HabitStat> habits, int total, bool isDark) {
+    final legendItems = habits.asMap().entries.map((entry) {
+      final i = entry.key;
+      final item = entry.value;
       final pct = total == 0 ? 0 : (item.count / total * 100).round();
-      if (i > 0) {
-        items.add(const SizedBox(height: 10));
-      }
-      items.add(
-        _LegendItem(
-          color: _palette[i % _palette.length],
-          label: _capitalize(item.name),
-          percentage: pct,
-          isDark: isDark,
-        ),
+      return _LegendGridItem(
+        color: _palette[i % _palette.length],
+        label: _capitalize(item.name),
+        percentage: pct,
+        isDark: isDark,
       );
-    }
-    return items;
+    }).toList();
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      children: legendItems.map((item) => SizedBox(
+        width: (MediaQuery.of(context).size.width - 80) / 2, // ~half card width
+        child: item,
+      )).toList(),
+    );
   }
 
   String _capitalize(String s) {
@@ -217,8 +291,8 @@ class HabitPieChart extends StatelessWidget {
   }
 }
 
-class _LegendItem extends StatelessWidget {
-  const _LegendItem({
+class _LegendGridItem extends StatelessWidget {
+  const _LegendGridItem({
     required this.color,
     required this.label,
     required this.percentage,
@@ -233,26 +307,23 @@ class _LegendItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
-          margin: const EdgeInsets.only(top: 4),
+          width: 10,
+          height: 10,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(4),
+            shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -260,6 +331,8 @@ class _LegendItem extends StatelessWidget {
                       ? MindPalColors.darkTextPrimary
                       : MindPalColors.ink900,
                 ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
               Text(
                 '$percentage%',
@@ -267,8 +340,8 @@ class _LegendItem extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: isDark
-                      ? MindPalColors.darkTextSecondary
-                      : MindPalColors.ink700,
+                      ? MindPalColors.darkTextSecondary.withValues(alpha: 0.6)
+                      : MindPalColors.ink700.withValues(alpha: 0.6),
                 ),
               ),
             ],

@@ -127,14 +127,14 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
                         children: [
                           Expanded(
                             child: _TabButton(
-                              label: 'AI Insights',
+                              label: 'Action Plan',
                               isSelected: _selectedTab == 0,
                               onTap: () => setState(() => _selectedTab = 0),
                             ),
                           ),
                           Expanded(
                             child: _TabButton(
-                              label: 'Action Plan',
+                              label: 'AI Insights',
                               isSelected: _selectedTab == 1,
                               onTap: () => setState(() => _selectedTab = 1),
                             ),
@@ -150,7 +150,7 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
                         horizontal: 20,
                         vertical: 8,
                       ),
-                      children: _selectedTab == 0
+                      children: _selectedTab == 1
                           ? [const _AIOverviewCard()]
                           : [
                               // Recommendation Carousel

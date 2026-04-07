@@ -146,6 +146,14 @@ class _TabButton extends StatelessWidget {
           color: isSelected
               ? (isDark ? MindPalColors.darkSurfaceHigh : MindPalColors.clay200)
               : Colors.transparent,
+          border: isSelected
+              ? null
+              : Border.all(
+                  color: isDark
+                      ? MindPalColors.darkBorder.withValues(alpha: 0.4)
+                      : MindPalColors.clay200.withValues(alpha: 0.4),
+                  width: 1,
+                ),
           borderRadius: BorderRadius.circular(100),
         ),
         child: Center(
@@ -153,14 +161,14 @@ class _TabButton extends StatelessWidget {
             label,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               color: isSelected
                   ? (isDark
                         ? MindPalColors.darkTextPrimary
                         : MindPalColors.ink900)
                   : (isDark
-                        ? MindPalColors.darkTextSecondary
-                        : MindPalColors.ink700),
+                        ? MindPalColors.darkTextSecondary.withValues(alpha: 0.7)
+                        : MindPalColors.ink700.withValues(alpha: 0.7)),
             ),
           ),
         ),
