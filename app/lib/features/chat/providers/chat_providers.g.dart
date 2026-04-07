@@ -82,7 +82,7 @@ final class ChatNotifierProvider
   }
 }
 
-String _$chatNotifierHash() => r'8670d9a14abe70a35dec5b9306e283ee7d1ca9a1';
+String _$chatNotifierHash() => r'6f8efa500791555a4fab76e90b0641ff5a9d52a2';
 
 abstract class _$ChatNotifier extends $Notifier<ChatState> {
   ChatState build();

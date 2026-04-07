@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:mindpal_app/features/chat/data/chat_local_cache.dart';
@@ -8,67 +10,27 @@ import 'package:mindpal_app/features/chat/data/chat_repository.dart';
 import 'package:mindpal_app/features/chat/domain/models.dart';
 
 part 'chat_providers.g.dart';
+part 'chat_providers.freezed.dart';
 
-class ChatState {
-  const ChatState({
-    required this.currentConversationId,
-    required this.messages,
-    required this.isInitializing,
-    required this.isSending,
-    required this.showStreaming,
-    required this.isThinking,
-    required this.streamingMessageId,
-    this.error,
-  });
+@freezed
+sealed class ChatState with _$ChatState {
+  const ChatState._();
 
-  factory ChatState.initial() => const ChatState(
-    currentConversationId: null,
-    messages: <String, List<Message>>{},
-    isInitializing: false,
-    isSending: false,
-    showStreaming: false,
-    isThinking: false,
-    streamingMessageId: null,
-  );
-
-  final String? currentConversationId;
-  final Map<String, List<Message>> messages;
-  final bool isInitializing;
-  final bool isSending;
-  final bool showStreaming;
-  final bool isThinking;
-  final String? streamingMessageId;
-  final String? error;
+  const factory ChatState({
+    String? currentConversationId,
+    @Default(<String, List<Message>>{}) Map<String, List<Message>> messages,
+    @Default(false) bool isInitializing,
+    @Default(false) bool isSending,
+    @Default(false) bool showStreaming,
+    @Default(false) bool isThinking,
+    String? streamingMessageId,
+    String? error,
+  }) = _ChatState;
 
   List<Message> get currentMessages {
     final id = currentConversationId;
-    if (id == null) {
-      return const <Message>[];
-    }
+    if (id == null) return const <Message>[];
     return messages[id] ?? const <Message>[];
-  }
-
-  ChatState copyWith({
-    String? currentConversationId,
-    Map<String, List<Message>>? messages,
-    bool? isInitializing,
-    bool? isSending,
-    bool? showStreaming,
-    bool? isThinking,
-    String? streamingMessageId,
-    String? error,
-  }) {
-    return ChatState(
-      currentConversationId:
-          currentConversationId ?? this.currentConversationId,
-      messages: messages ?? this.messages,
-      isInitializing: isInitializing ?? this.isInitializing,
-      isSending: isSending ?? this.isSending,
-      showStreaming: showStreaming ?? this.showStreaming,
-      isThinking: isThinking ?? this.isThinking,
-      streamingMessageId: streamingMessageId,
-      error: error,
-    );
   }
 }
 
@@ -86,7 +48,7 @@ class ChatNotifier extends _$ChatNotifier {
       // Cancel any in-flight operations when disposed
     });
     ref.read(chatLocalCacheProvider).warmup();
-    return ChatState.initial();
+    return const ChatState();
   }
 
   Future<void> ensureConversation() async {
@@ -265,6 +227,9 @@ class ChatNotifier extends _$ChatNotifier {
       createdAt: DateTime.now(),
     );
 
+    // Haptic feedback on send
+    HapticFeedback.lightImpact();
+
     final list = <Message>[...state.currentMessages, userMessage, assistantPlaceholder];
     state = state.copyWith(
       messages: <String, List<Message>>{
@@ -301,6 +266,9 @@ class ChatNotifier extends _$ChatNotifier {
           return;
         }
         
+        // Haptic feedback on message receive complete
+        HapticFeedback.selectionClick();
+        
         // Update final message
         final currentList = state.messages[conversationId] ?? <Message>[];
         final updatedList = currentList.map((m) {
@@ -336,6 +304,9 @@ class ChatNotifier extends _$ChatNotifier {
           completer.complete();
           return;
         }
+        // Haptic feedback on error
+        HapticFeedback.heavyImpact();
+        
         state = state.copyWith(
           isSending: false,
           showStreaming: false,

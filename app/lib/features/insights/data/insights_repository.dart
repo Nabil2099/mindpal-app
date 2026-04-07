@@ -35,7 +35,10 @@ class InsightsRepository {
         '/insights/summary',
         queryParameters: query,
       ),
-      _dio.get<List<dynamic>>('/insights/time', queryParameters: query),
+      _dio.get<List<dynamic>>(
+        '/insights/trends/emotions',
+        queryParameters: query,
+      ),
     ]);
 
     final emotionsData =
@@ -44,10 +47,6 @@ class InsightsRepository {
     final summaryData =
         responses[2].data as Map<String, dynamic>? ?? const <String, dynamic>{};
     final timeData = responses[3].data as List<dynamic>? ?? const <dynamic>[];
-    final totalMessages = timeData
-        .whereType<Map<String, dynamic>>()
-        .map((item) => (item['message_count'] as num?)?.toDouble() ?? 0)
-        .fold<double>(0, (a, b) => a + b);
 
     return InsightsBundle(
       emotions: emotionsData
@@ -63,14 +62,41 @@ class InsightsRepository {
           .whereType<Map<String, dynamic>>()
           .map((item) {
             final next = Map<String, dynamic>.from(item);
-            final count = (item['message_count'] as num?)?.toDouble() ?? 0;
-            final normalized =
-                totalMessages == 0 ? 0.0 : (count / totalMessages) * 100;
-            next['message_count'] = normalized;
+            final total = (item['total'] as num?)?.toDouble() ?? 0;
+
+            if (item.containsKey('emotions') && item['emotions'] is List) {
+              final List<dynamic> emotionsList =
+                  item['emotions'] as List<dynamic>;
+              final List<Map<String, dynamic>> normalizedEmotions = [];
+
+              for (final e in emotionsList.whereType<Map<String, dynamic>>()) {
+                final count = (e['count'] as num?)?.toDouble() ?? 0.0;
+                final label = e['label'] as String? ?? 'Neutral';
+                final normalized = total == 0 ? 0.0 : (count / total) * 100;
+                normalizedEmotions.add({
+                  'label': label,
+                  'percent': normalized,
+                  'count_raw': count.toInt(),
+                });
+              }
+              next['emotions'] = normalizedEmotions;
+            }
+
             return TimeInsight.fromJson(next);
           })
           .toList(growable: false),
     );
+  }
+
+  /// Fetch AI-generated personalized overview.
+  Future<AIOverview> fetchAIOverview() async {
+    final query = <String, Object?>{'user_id': kUserId};
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/insights/ai-overview',
+      queryParameters: query,
+    );
+    final data = response.data ?? const <String, dynamic>{};
+    return AIOverview.fromJson(data);
   }
 }
 

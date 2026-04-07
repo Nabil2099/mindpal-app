@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import 'package:mindpal_app/features/insights/domain/models.dart';
 import 'package:mindpal_app/features/insights/providers/insights_providers.dart';
 import 'package:mindpal_app/features/insights/presentation/widgets/emotion_bar_chart.dart';
 import 'package:mindpal_app/features/insights/presentation/widgets/habit_pie_chart.dart';
@@ -44,84 +45,79 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
       body: state.loading
           ? const _LoadingBody()
           : state.error != null
-              ? _ErrorBody(
-                  message: state.error!,
-                  onRetry: ref.read(insightsProvider.notifier).fetchInsights,
-                )
-              : state.emotions.isEmpty &&
-                      state.habits.isEmpty &&
-                      state.time.isEmpty
-                  ? MindPalEmptyPanel(
-                      title: 'No insights yet',
-                      subtitle:
-                          'Start a few chats and reflections to reveal your emotional landscape.',
-                      actionLabel: 'Refresh insights',
-                      icon: Icons.query_stats,
-                      onAction:
-                          ref.read(insightsProvider.notifier).fetchInsights,
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.read(insightsProvider.notifier).fetchInsights(),
-                      child: Column(
+          ? _ErrorBody(
+              message: state.error!,
+              onRetry: ref.read(insightsProvider.notifier).fetchInsights,
+            )
+          : state.emotions.isEmpty && state.habits.isEmpty && state.time.isEmpty
+          ? MindPalEmptyPanel(
+              title: 'No insights yet',
+              subtitle:
+                  'Start a few chats and reflections to reveal your emotional landscape.',
+              actionLabel: 'Refresh insights',
+              icon: Icons.query_stats,
+              onAction: ref.read(insightsProvider.notifier).fetchInsights,
+            )
+          : RefreshIndicator(
+              onRefresh: () =>
+                  ref.read(insightsProvider.notifier).fetchInsights(),
+              child: Column(
+                children: [
+                  // Subtitle
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _selectedTab == 0
+                            ? 'A curated view of your internal landscape'
+                            : 'A curated view of your daily practices',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ),
+                  // Tab selector
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? MindPalColors.darkSurface
+                            : MindPalColors.sand100,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Row(
                         children: [
-                          // Subtitle
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                _selectedTab == 0
-                                    ? 'A curated view of your internal landscape'
-                                    : 'A curated view of your daily practices',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ),
-                          ),
-                          // Tab selector
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? MindPalColors.darkSurface
-                                    : MindPalColors.sand100,
-                                borderRadius: BorderRadius.circular(100),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: _TabButton(
-                                      label: 'Emotional Patterns',
-                                      isSelected: _selectedTab == 0,
-                                      onTap: () =>
-                                          setState(() => _selectedTab = 0),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: _TabButton(
-                                      label: 'Habit Frequency',
-                                      isSelected: _selectedTab == 1,
-                                      onTap: () =>
-                                          setState(() => _selectedTab = 1),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Content
                           Expanded(
-                            child: _selectedTab == 0
-                                ? _EmotionalPatternsTab(state: state)
-                                : _HabitFrequencyTab(state: state),
+                            child: _TabButton(
+                              label: 'Emotional Patterns',
+                              isSelected: _selectedTab == 0,
+                              onTap: () => setState(() => _selectedTab = 0),
+                            ),
+                          ),
+                          Expanded(
+                            child: _TabButton(
+                              label: 'Habit Frequency',
+                              isSelected: _selectedTab == 1,
+                              onTap: () => setState(() => _selectedTab = 1),
+                            ),
                           ),
                         ],
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Content
+                  Expanded(
+                    child: _selectedTab == 0
+                        ? _EmotionalPatternsTab(state: state)
+                        : _HabitFrequencyTab(state: state),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
@@ -160,11 +156,11 @@ class _TabButton extends StatelessWidget {
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               color: isSelected
                   ? (isDark
-                      ? MindPalColors.darkTextPrimary
-                      : MindPalColors.ink900)
+                        ? MindPalColors.darkTextPrimary
+                        : MindPalColors.ink900)
                   : (isDark
-                      ? MindPalColors.darkTextSecondary
-                      : MindPalColors.ink700),
+                        ? MindPalColors.darkTextSecondary
+                        : MindPalColors.ink700),
             ),
           ),
         ),
@@ -181,6 +177,44 @@ class _EmotionalPatternsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final isAllPatterns = state.showingAllPatterns;
+    final timeInsight = state.selectedTimeInsight;
+
+    // For "All patterns" view, use aggregated data
+    final displayEmotions = isAllPatterns
+        ? state.allPatternsEmotions
+        : (timeInsight != null && timeInsight.items.isNotEmpty
+              ? timeInsight.items
+                    .map((e) => EmotionStat(label: e.label, count: e.count))
+                    .toList()
+              : state.emotions);
+
+    final topEmotion = displayEmotions.isNotEmpty
+        ? displayEmotions.reduce((a, b) => a.count > b.count ? a : b).label
+        : state.summary.mood;
+
+    final displaySummary = isAllPatterns
+        ? state.summary.copyWith(
+            mood: topEmotion,
+            entries: state.allPatternsTotal,
+          )
+        : (timeInsight != null
+              ? state.summary.copyWith(
+                  mood: topEmotion,
+                  entries: timeInsight.total,
+                )
+              : state.summary);
+
+    // Determine display label for date selector
+    String dateLabel;
+    if (isAllPatterns) {
+      dateLabel = 'All Patterns';
+    } else if (timeInsight != null) {
+      dateLabel = DateFormat('EEEE, MMMM d').format(timeInsight.date);
+    } else {
+      dateLabel = DateFormat('EEEE, MMMM d').format(DateTime.now());
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
@@ -205,23 +239,40 @@ class _EmotionalPatternsTab extends ConsumerWidget {
               ),
               Expanded(
                 child: Center(
-                  child: Text(
-                    DateFormat('EEEE, MMMM d').format(
-                      state.selectedTimeInsight?.date ?? DateTime.now(),
-                    ),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? MindPalColors.darkTextPrimary
-                          : MindPalColors.ink900,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isAllPatterns)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Icon(
+                            Icons.auto_awesome,
+                            size: 16,
+                            color: isDark
+                                ? MindPalColors.clay300
+                                : MindPalColors.clay400,
+                          ),
+                        ),
+                      Text(
+                        dateLabel,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? MindPalColors.darkTextPrimary
+                              : MindPalColors.ink900,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
               _DayButton(
                 icon: Icons.chevron_right,
-                onTap: ref.read(insightsProvider.notifier).selectNextDay,
+                onTap: isAllPatterns
+                    ? null
+                    : ref.read(insightsProvider.notifier).selectNextDay,
+                disabled: isAllPatterns,
               ),
             ],
           ),
@@ -229,7 +280,7 @@ class _EmotionalPatternsTab extends ConsumerWidget {
         const SizedBox(height: 16),
 
         // Today's Resonance Card
-        MoodSummaryCard(summary: state.summary),
+        MoodSummaryCard(summary: displaySummary),
         const SizedBox(height: 16),
 
         // Emotion Frequency Card
@@ -240,7 +291,9 @@ class _EmotionalPatternsTab extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Emotion Frequency',
+                isAllPatterns
+                    ? 'Overall Emotion Frequency'
+                    : 'Emotion Frequency',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -250,7 +303,7 @@ class _EmotionalPatternsTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              EmotionBarChart(items: state.emotions),
+              EmotionBarChart(items: displayEmotions),
             ],
           ),
         ),
@@ -274,10 +327,11 @@ class _HabitFrequencyTab extends StatelessWidget {
 }
 
 class _DayButton extends StatelessWidget {
-  const _DayButton({required this.icon, required this.onTap});
+  const _DayButton({required this.icon, this.onTap, this.disabled = false});
 
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +340,7 @@ class _DayButton extends StatelessWidget {
       width: 36,
       height: 36,
       child: OutlinedButton(
-        onPressed: onTap,
+        onPressed: disabled ? null : onTap,
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.zero,
           side: BorderSide(
@@ -297,7 +351,9 @@ class _DayButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 18,
-          color: isDark ? MindPalColors.darkTextSecondary : MindPalColors.ink800,
+          color: isDark
+              ? MindPalColors.darkTextSecondary
+              : MindPalColors.ink800,
         ),
       ),
     );

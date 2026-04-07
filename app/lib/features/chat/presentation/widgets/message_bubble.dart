@@ -119,26 +119,15 @@ class MessageBubble extends StatelessWidget {
               width: 32,
               height: 32,
               margin: const EdgeInsets.only(top: 4),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color:
-                    isDark
-                        ? MindPalColors.darkSurfaceHigh
-                        : MindPalColors.sand100,
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                border:
-                    isDark ? Border.all(color: MindPalColors.darkBorder) : null,
               ),
-              child: Text(
-                'MP',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color:
-                      isDark
-                          ? MindPalColors.darkTextPrimary
-                          : MindPalColors.ink900,
-                ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset(
+                'assets/logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 8),

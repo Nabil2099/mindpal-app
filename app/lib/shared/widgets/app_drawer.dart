@@ -41,19 +41,15 @@ class AppDrawer extends ConsumerWidget {
                     Container(
                       width: 36,
                       height: 36,
-                      decoration: BoxDecoration(
-                        color: isDark ? MindPalColors.darkSurfaceHigh : MindPalColors.clay200,
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                       ),
-                      child: Center(
-                        child: Text(
-                          'M',
-                          style: GoogleFonts.fraunces(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? MindPalColors.darkTextPrimary : MindPalColors.ink900,
-                          ),
-                        ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -449,12 +445,15 @@ class _ConversationCard extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(
-                  color: isDark ? MindPalColors.darkSurfaceHigh : MindPalColors.sand100,
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                 ),
-                child: Center(
-                  child: _MindPalMiniIcon(isDark: isDark, size: 16),
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  'assets/logo.png',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(width: 12),
@@ -725,22 +724,4 @@ class _RecommendationsIconPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _RecommendationsIconPainter oldDelegate) =>
       oldDelegate.color != color;
-}
-
-class _MindPalMiniIcon extends StatelessWidget {
-  const _MindPalMiniIcon({required this.isDark, this.size = 14});
-  final bool isDark;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'M',
-      style: GoogleFonts.fraunces(
-        fontSize: size,
-        fontWeight: FontWeight.w600,
-        color: isDark ? MindPalColors.darkTextPrimary : MindPalColors.ink900,
-      ),
-    );
-  }
 }
