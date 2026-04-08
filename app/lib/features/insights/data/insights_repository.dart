@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:mindpal_app/constants.dart';
 import 'package:mindpal_app/features/insights/domain/models.dart';
+import 'package:mindpal_app/features/insights/providers/habit_providers.dart';
 import 'package:mindpal_app/shared/providers/core_providers.dart';
 
 part 'insights_repository.g.dart';
@@ -88,6 +89,25 @@ class InsightsRepository {
     );
   }
 
+  /// Fetch habits filtered by time period
+  Future<List<HabitStat>> fetchHabits({HabitPeriod? period}) async {
+    final query = <String, Object?>{
+      'user_id': kUserId,
+      if (period != null) 'period': period.toApiValue(),
+    };
+    
+    final response = await _dio.get<List<dynamic>>(
+      '/insights/habits',
+      queryParameters: query,
+    );
+    
+    final habitsData = response.data ?? const <dynamic>[];
+    return habitsData
+        .whereType<Map<String, dynamic>>()
+        .map(HabitStat.fromJson)
+        .toList(growable: false);
+  }
+
   /// Fetch AI-generated personalized overview.
   Future<AIOverview> fetchAIOverview() async {
     final query = <String, Object?>{'user_id': kUserId};
@@ -103,4 +123,18 @@ class InsightsRepository {
 @riverpod
 InsightsRepository insightsRepository(Ref ref) {
   return InsightsRepository(ref.watch(dioProvider));
+}
+
+/// Extension to convert HabitPeriod to API query value
+extension HabitPeriodApi on HabitPeriod {
+  String toApiValue() {
+    switch (this) {
+      case HabitPeriod.week:
+        return 'week';
+      case HabitPeriod.month:
+        return 'month';
+      case HabitPeriod.allTime:
+        return 'all';
+    }
+  }
 }

@@ -61,65 +61,99 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           : RefreshIndicator(
               onRefresh: () =>
                   ref.read(insightsProvider.notifier).fetchInsights(),
-              child: Column(
-                children: [
-                  // Subtitle
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _selectedTab == 0
-                            ? 'A curated view of your internal landscape'
-                            : 'A curated view of your daily practices',
-                        style: Theme.of(context).textTheme.bodySmall,
+              child: CustomScrollView(
+                slivers: [
+                  // Subtitle sliver
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _selectedTab == 0
+                              ? 'A curated view of your internal landscape'
+                              : 'A curated view of your daily practices',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            color: isDark
+                                ? MindPalColors.darkTextSecondary.withValues(alpha: 0.65)
+                                : MindPalColors.ink700.withValues(alpha: 0.65),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  // Tab selector
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? MindPalColors.darkSurface
-                            : MindPalColors.sand100,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _TabButton(
-                              label: 'Emotional Patterns',
-                              isSelected: _selectedTab == 0,
-                              onTap: () => setState(() => _selectedTab = 0),
-                            ),
+                  // Sticky tab bar
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _TabBarDelegate(
+                      child: Container(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? MindPalColors.darkSurface
+                                : MindPalColors.sand100,
+                            borderRadius: BorderRadius.circular(100),
                           ),
-                          Expanded(
-                            child: _TabButton(
-                              label: 'Habit Frequency',
-                              isSelected: _selectedTab == 1,
-                              onTap: () => setState(() => _selectedTab = 1),
-                            ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _TabButton(
+                                  label: 'Emotional Patterns',
+                                  isSelected: _selectedTab == 0,
+                                  onTap: () => setState(() => _selectedTab = 0),
+                                ),
+                              ),
+                              Expanded(
+                                child: _TabButton(
+                                  label: 'Habit Frequency',
+                                  isSelected: _selectedTab == 1,
+                                  onTap: () => setState(() => _selectedTab = 1),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
+                      height: 68,
                     ),
                   ),
-                  const SizedBox(height: 16),
                   // Content
-                  Expanded(
-                    child: _selectedTab == 0
-                        ? _EmotionalPatternsTab(state: state)
-                        : _HabitFrequencyTab(state: state),
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 8),
+                    sliver: _selectedTab == 0
+                        ? _EmotionalPatternsSliver(state: state)
+                        : _HabitFrequencySliver(state: state),
                   ),
                 ],
               ),
             ),
     );
   }
+}
+
+/// Delegate for the sticky tab bar header
+class _TabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  const _TabBarDelegate({required this.child, required this.height});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => child;
+
+  @override
+  bool shouldRebuild(_TabBarDelegate old) => old.child != child || old.height != height;
 }
 
 class _TabButton extends StatelessWidget {
@@ -177,8 +211,8 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-class _EmotionalPatternsTab extends ConsumerWidget {
-  const _EmotionalPatternsTab({required this.state});
+class _EmotionalPatternsSliver extends ConsumerWidget {
+  const _EmotionalPatternsSliver({required this.state});
 
   final InsightsState state;
 
@@ -224,112 +258,116 @@ class _EmotionalPatternsTab extends ConsumerWidget {
       dateLabel = DateFormat('EEEE, MMMM d').format(DateTime.now());
     }
 
-    return ListView(
+    return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-      children: [
-        // Date selector
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            color: isDark
-                ? MindPalColors.darkSurface
-                : Colors.white.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: isDark ? MindPalColors.darkBorder : MindPalColors.clay100,
-            ),
-          ),
-          child: Row(
-            children: [
-              _DayButton(
-                icon: Icons.chevron_left,
-                onTap: ref.read(insightsProvider.notifier).selectPrevDay,
+      sliver: SliverList(
+        delegate: SliverChildListDelegate([
+          // Date selector
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? MindPalColors.darkSurface
+                  : Colors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: isDark ? MindPalColors.darkBorder : MindPalColors.clay100,
               ),
-              Expanded(
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isAllPatterns)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: Icon(
-                            Icons.auto_awesome,
-                            size: 16,
+            ),
+            child: Row(
+              children: [
+                _DayButton(
+                  icon: Icons.chevron_left,
+                  onTap: ref.read(insightsProvider.notifier).selectPrevDay,
+                ),
+                Expanded(
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isAllPatterns)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Icon(
+                              Icons.auto_awesome,
+                              size: 16,
+                              color: isDark
+                                  ? MindPalColors.clay300
+                                  : MindPalColors.clay400,
+                            ),
+                          ),
+                        Text(
+                          dateLabel,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                             color: isDark
-                                ? MindPalColors.clay300
-                                : MindPalColors.clay400,
+                                ? MindPalColors.darkTextPrimary
+                                : MindPalColors.ink900,
                           ),
                         ),
-                      Text(
-                        dateLabel,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? MindPalColors.darkTextPrimary
-                              : MindPalColors.ink900,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              _DayButton(
-                icon: Icons.chevron_right,
-                onTap: isAllPatterns
-                    ? null
-                    : ref.read(insightsProvider.notifier).selectNextDay,
-                disabled: isAllPatterns,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Today's Resonance Card
-        MoodSummaryCard(summary: displaySummary),
-        const SizedBox(height: 16),
-
-        // Emotion Frequency Card
-        MindPalCard(
-          radius: 24,
-          color: isDark ? MindPalColors.darkSurface : MindPalColors.surfaceLow,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isAllPatterns
-                    ? 'Overall Emotion Frequency'
-                    : 'Emotion Frequency',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? MindPalColors.darkTextPrimary
-                      : MindPalColors.ink900,
+                _DayButton(
+                  icon: Icons.chevron_right,
+                  onTap: isAllPatterns
+                      ? null
+                      : ref.read(insightsProvider.notifier).selectNextDay,
+                  disabled: isAllPatterns,
                 ),
-              ),
-              const SizedBox(height: 20),
-              EmotionBarChart(items: displayEmotions),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+
+          // Today's Resonance Card
+          MoodSummaryCard(summary: displaySummary),
+          const SizedBox(height: 16),
+
+          // Emotion Frequency Card
+          MindPalCard(
+            radius: 24,
+            color: isDark ? MindPalColors.darkSurface : MindPalColors.surfaceLow,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isAllPatterns
+                      ? 'Overall Emotion Frequency'
+                      : 'Emotion Frequency',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? MindPalColors.darkTextPrimary
+                        : MindPalColors.ink900,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                EmotionBarChart(items: displayEmotions),
+              ],
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
 
-class _HabitFrequencyTab extends StatelessWidget {
-  const _HabitFrequencyTab({required this.state});
+class _HabitFrequencySliver extends StatelessWidget {
+  const _HabitFrequencySliver({required this.state});
 
   final InsightsState state;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return SliverPadding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-      child: HabitPieChart(habits: state.habits),
+      sliver: SliverToBoxAdapter(
+        child: HabitPieChart(habits: state.habits),
+      ),
     );
   }
 }

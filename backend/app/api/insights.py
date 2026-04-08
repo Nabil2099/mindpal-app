@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from typing import Literal
+
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics.time_patterns import TimePatternAnalytics
@@ -27,8 +29,12 @@ async def insights_emotions(user_id: int, db: AsyncSession = Depends(get_db_sess
 
 
 @router.get("/habits", response_model=list[HabitInsight])
-async def insights_habits(user_id: int, db: AsyncSession = Depends(get_db_session)) -> list[HabitInsight]:
-    rows = await analytics.habit_stats(db, user_id=user_id)
+async def insights_habits(
+    user_id: int,
+    period: Literal["week", "month", "all"] | None = Query(default=None, description="Time period filter"),
+    db: AsyncSession = Depends(get_db_session),
+) -> list[HabitInsight]:
+    rows = await analytics.habit_stats(db, user_id=user_id, period=period)
     return [HabitInsight.model_validate(item) for item in rows]
 
 
